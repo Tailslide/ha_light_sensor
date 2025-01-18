@@ -3,3 +3,5 @@
 /build
 /sdkconfig
 /sdkconfig.ci
+secrets.h
+config.h

@@ -162,6 +162,7 @@ The above automation will notify you if the device hasn't reported its state for
 The device is designed to be power efficient:
 - Uses deep sleep between readings
 - Only connects to WiFi/MQTT when states change or every 24 hours
+- WiFi power save mode (modem sleep) enabled during connections, reducing power consumption by ~60%
 - Configurable sleep duration
 - Minimal wake time with burst sampling
 - UART/Serial interface completely disabled after diagnostic mode check

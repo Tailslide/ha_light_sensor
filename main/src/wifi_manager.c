@@ -75,6 +75,10 @@ bool wifi_manager_init(void)
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    
+    // Enable WiFi power save mode for maximum power efficiency
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MIN_MODEM));
+    
     ESP_ERROR_CHECK(esp_wifi_start());
 
     if (DEBUG_LOGS) printf("[%s] WiFi started, waiting for connection...\n", TAG);

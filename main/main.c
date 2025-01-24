@@ -25,8 +25,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                              int32_t event_id, void *event_data);
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, 
                              int32_t event_id, void *event_data);
-static void wifi_init(void);
-static void mqtt_init(void);
+static bool wifi_init(void);
+static bool mqtt_init(void);
 static void burst_sample_sensors(adc_oneshot_unit_handle_t adc1_handle, 
                                sensor_data_t *sensor1, sensor_data_t *sensor2);
 static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2);
@@ -57,8 +57,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
     }
 }
 
-// Initialize WiFi
-static void wifi_init(void)
+// Initialize WiFi with timeout
+static bool wifi_init(void)
 {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -67,8 +67,8 @@ static void wifi_init(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, 
-                                             &wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                              &wifi_event_handler, NULL));
 
     wifi_config_t wifi_config = {
         .sta = {
@@ -80,29 +80,53 @@ static void wifi_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    // Wait for connection with timeout
+    int retry_count = 0;
+    while (retry_count < 10) { // 10 * 500ms = 5 second timeout
+        wifi_ap_record_t ap_info;
+        if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+            ESP_LOGI(TAG, "WiFi Connected");
+            return true;
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+        retry_count++;
+    }
+    
+    ESP_LOGW(TAG, "WiFi connection timeout");
+    esp_wifi_stop();
+    return false;
 }
 
 // Initialize MQTT
-static void mqtt_init(void)
+static bool mqtt_init(void)
 {
     esp_mqtt_client_config_t mqtt_cfg = {
-        .broker = {
-            .address = {
-                .uri = "mqtt://" MQTT_BROKER,
-                .port = MQTT_PORT
-            }
-        },
-        .credentials = {
-            .username = MQTT_USERNAME,
-            .authentication = {
-                .password = MQTT_PASSWORD
-            }
-        }
+        .broker.address.uri = "mqtt://" MQTT_BROKER,
+        .broker.address.port = MQTT_PORT,
+        .credentials.username = MQTT_USERNAME,
+        .credentials.authentication.password = MQTT_PASSWORD
     };
+
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, 
+    if (!mqtt_client) {
+        ESP_LOGW(TAG, "Failed to initialize MQTT client");
+        return false;
+    }
+
+    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID,
                                  mqtt_event_handler, NULL);
-    esp_mqtt_client_start(mqtt_client);
+    
+    if (esp_mqtt_client_start(mqtt_client) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to start MQTT client");
+        esp_mqtt_client_destroy(mqtt_client);
+        mqtt_client = NULL;
+        return false;
+    }
+
+    // Give some time for the connection to establish
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    return true;
 }
 
 // Perform burst sampling
@@ -150,34 +174,44 @@ static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2)
 
     // Only connect and publish if states have changed
     if (trap_triggered != last_trap_state || battery_low != last_battery_state) {
-        // Initialize WiFi and MQTT only when needed
-        wifi_init();
-        mqtt_init();
+        bool connected = false;
         
-        // Wait for connection
-        vTaskDelay(pdMS_TO_TICKS(2000));  // Give time for connections to establish
+        // Initialize WiFi and MQTT only when needed
+        if (wifi_init()) {
+            if (mqtt_init()) {
+                connected = true;
+                
+                // Publish trap state if changed
+                if (trap_triggered != last_trap_state) {
+                    const char *trap_state = trap_triggered ? "triggered" : "ready";
+                    if (esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_CAUGHT, trap_state, 0, 1, 0) != -1) {
+                        last_trap_state = trap_triggered;
+                    }
+                }
 
-        // Publish trap state if changed
-        if (trap_triggered != last_trap_state) {
-            const char *trap_state = trap_triggered ? "triggered" : "ready";
-            esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_CAUGHT, trap_state, 0, 1, 0);
-            last_trap_state = trap_triggered;
+                // Publish battery state if changed
+                if (battery_low != last_battery_state) {
+                    const char *battery_state = battery_low ? "low" : "ok";
+                    if (esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_BATTERY, battery_state, 0, 1, 0) != -1) {
+                        last_battery_state = battery_low;
+                    }
+                }
+
+                // Wait briefly for messages to be sent
+                vTaskDelay(pdMS_TO_TICKS(500));
+
+                // Clean shutdown of MQTT
+                esp_mqtt_client_stop(mqtt_client);
+                esp_mqtt_client_destroy(mqtt_client);
+                mqtt_client = NULL;
+            }
+            // Clean shutdown of WiFi
+            esp_wifi_stop();
         }
-
-        // Publish battery state if changed
-        if (battery_low != last_battery_state) {
-            const char *battery_state = battery_low ? "low" : "ok";
-            esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_BATTERY, battery_state, 0, 1, 0);
-            last_battery_state = battery_low;
+        
+        if (!connected) {
+            ESP_LOGW(TAG, "Failed to connect - will retry on next state change");
         }
-
-        // Wait for messages to be sent
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        // Clean shutdown of connections
-        esp_mqtt_client_stop(mqtt_client);
-        esp_mqtt_client_destroy(mqtt_client);
-        esp_wifi_stop();
     }
 
     // Log states (regardless of whether we published)

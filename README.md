@@ -1,53 +1,120 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C5 | ESP32-C6 | ESP32-C61 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 | Linux |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | --------- | -------- | -------- | -------- | -------- | ----- |
+# Home Assistant Mouse Trap Monitor
 
-# Hello World Example
+An ESP32-based mouse trap monitoring system that integrates with Home Assistant via MQTT. The system uses light-dependent resistors (LDRs) to detect both the trap state (triggered/ready) and battery status (ok/low), providing real-time updates to your Home Assistant instance.
 
-Starts a FreeRTOS task to print "Hello World".
+## Features
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+- Monitors mouse trap state (triggered/ready) using an LDR sensor
+- Monitors battery status (ok/low) using a second LDR sensor
+- Integrates with Home Assistant via MQTT
+- Power-efficient design with deep sleep between readings
+- Configurable sampling parameters and thresholds
+- Automatic state persistence across deep sleep cycles
+- Robust WiFi and MQTT connection handling
 
-## How to use example
+## Hardware Requirements
 
-Follow detailed instructions provided specifically for this example.
+- ESP32 development board
+- 2x Light Dependent Resistors (LDRs)
+- Voltage divider resistors for LDRs
+- Mouse trap with status LED
+- Battery with status LED
 
-Select the instructions depending on Espressif chip installed on your development board:
+## Pin Configuration
 
-- [ESP32 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/stable/get-started/index.html)
-- [ESP32-S2 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/index.html)
+- GPIO4: LDR sensor for trap state detection
+- GPIO1: LDR sensor for battery status detection
 
+## Software Requirements
 
-## Example folder contents
+- ESP-IDF v5.x
+- Home Assistant with MQTT broker
 
-The project **hello_world** contains one source file in C language [hello_world_main.c](main/hello_world_main.c). The file is located in folder [main](main).
+## Setup Instructions
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt` files that provide set of directives and instructions describing the project's source files and targets (executable, library, or both).
+1. Clone this repository
+2. Copy `main/secrets.h.template` to `main/secrets.h` and configure your WiFi and MQTT credentials:
+   ```c
+   #define WIFI_SSID "your_wifi_ssid"
+   #define WIFI_PASS "your_wifi_password"
+   #define MQTT_BROKER "your.mqtt.broker.ip"
+   #define MQTT_USERNAME "your_mqtt_username"
+   #define MQTT_PASSWORD "your_mqtt_password"
+   ```
 
-Below is short explanation of remaining files in the project folder.
+3. (Optional) Copy `main/config.h.template` to `main/config.h` and adjust the configuration parameters if needed:
+   - MQTT topics
+   - ADC channels
+   - Timing parameters
+   - Threshold values
 
+4. Build and flash the project:
+   ```bash
+   powershell -Command "& {. 'C:\Users\gregp\esp\v5.4\esp-idf\export.ps1'; idf.py build}"
+   ```
+
+## Configuration Parameters
+
+### MQTT Configuration
+- `MQTT_PORT`: MQTT broker port (default: 1883)
+- `MQTT_TOPIC_CAUGHT`: Topic for trap state updates (default: "home/mousetrap/backdoor/state")
+- `MQTT_TOPIC_BATTERY`: Topic for battery status updates (default: "home/mousetrap/backdoor/battery")
+
+### Timing Configuration
+- `BURST_DURATION_MS`: Duration of each sampling burst (default: 12000ms)
+- `SAMPLE_INTERVAL_MS`: Interval between samples during burst (default: 20ms)
+- `SLEEP_TIME_SECONDS`: Deep sleep duration between bursts (default: 30 minutes)
+
+### Threshold Configuration
+- `TRAP_THRESHOLD`: ADC threshold for trap triggered state (default: 300)
+- `BATTERY_THRESHOLD`: ADC threshold for low battery state (default: 300)
+
+## Home Assistant Configuration
+
+Add the following to your Home Assistant configuration:
+
+```yaml
+binary_sensor:
+  - platform: mqtt
+    name: "Back Door Mouse Trap"
+    state_topic: "home/mousetrap/backdoor/state"
+    payload_on: "triggered"
+    payload_off: "ready"
+    device_class: occupancy
+
+  - platform: mqtt
+    name: "Back Door Mouse Trap Battery"
+    state_topic: "home/mousetrap/backdoor/battery"
+    payload_on: "low"
+    payload_off: "ok"
+    device_class: battery
 ```
-├── CMakeLists.txt
-├── pytest_hello_world.py      Python script used for automated testing
-├── main
-│   ├── CMakeLists.txt
-│   └── hello_world_main.c
-└── README.md                  This is the file you are currently reading
-```
 
-For more information on structure and contents of ESP-IDF projects, please refer to Section [Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html) of the ESP-IDF Programming Guide.
+## Operation
+
+1. The device wakes up every 30 minutes (configurable)
+2. Performs burst sampling for 12 seconds to detect LED states
+3. If any state has changed (trap triggered or battery low):
+   - Connects to WiFi
+   - Connects to MQTT broker
+   - Publishes the new state(s)
+4. Goes back to deep sleep to conserve power
+
+## Power Consumption
+
+The device is designed to be power efficient:
+- Uses deep sleep between readings
+- Only connects to WiFi/MQTT when states change
+- Configurable sleep duration
+- Minimal wake time with burst sampling
 
 ## Troubleshooting
 
-* Program upload failure
+- If the sensor readings are inconsistent, adjust the `TRAP_THRESHOLD` and `BATTERY_THRESHOLD` values in `config.h`
+- For more frequent updates, reduce `SLEEP_TIME_SECONDS`
+- For more accurate readings, increase `BURST_DURATION_MS` or decrease `SAMPLE_INTERVAL_MS`
+- Check the serial output for debugging information and sensor values
 
-    * Hardware connection is not correct: run `idf.py -p PORT monitor`, and reboot your board to see if there are any output logs.
-    * The baud rate for downloading is too high: lower your baud rate in the `menuconfig` menu, and try again.
+## License
 
-## Technical support and feedback
-
-Please use the following feedback channels:
-
-* For technical queries, go to the [esp32.com](https://esp32.com/) forum
-* For a feature request or bug report, create a [GitHub issue](https://github.com/espressif/esp-idf/issues)
-
-We will get back to you as soon as possible.
+This project is open source and available under the MIT License.

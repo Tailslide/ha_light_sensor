@@ -11,6 +11,32 @@ An ESP32-based mouse trap monitoring system that integrates with Home Assistant 
 - Configurable sampling parameters and thresholds
 - Automatic state persistence across deep sleep cycles
 - Robust WiFi and MQTT connection handling
+- Modular code structure for better maintainability
+
+## Project Structure
+
+The project follows a modular architecture for better organization and maintainability:
+
+```
+main/
+├── include/                 # Header files
+│   ├── common.h            # Common definitions and utilities
+│   ├── wifi_manager.h      # WiFi connection management
+│   ├── mqtt_manager.h      # MQTT client operations
+│   ├── sensor_manager.h    # ADC and sensor handling
+│   ├── led_controller.h    # LED control functions
+│   └── diagnostic.h        # Diagnostic mode operations
+├── src/                    # Source files
+│   ├── main.c             # Main application entry
+│   ├── wifi_manager.c     # WiFi implementation
+│   ├── mqtt_manager.c     # MQTT implementation
+│   ├── sensor_manager.c   # Sensor implementation
+│   ├── led_controller.c   # LED implementation
+│   └── diagnostic.c       # Diagnostic implementation
+├── CMakeLists.txt         # Component build configuration
+├── config.h.template      # Configuration template
+└── secrets.h.template     # Credentials template
+```
 
 ## Hardware Requirements
 
@@ -114,6 +140,7 @@ The device is designed to be power efficient:
 - For more frequent updates, reduce `SLEEP_TIME_SECONDS`
 - For more accurate readings, increase `BURST_DURATION_MS` or decrease `SAMPLE_INTERVAL_MS`
 - Check the serial output for debugging information and sensor values
+- Use the built-in diagnostic mode by holding the boot button during startup
 
 ## License
 

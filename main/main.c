@@ -10,16 +10,84 @@
 #include "esp_mac.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
+#include "driver/gpio.h"
 #include "secrets.h"  // Contains WiFi and MQTT credentials
 #include "config.h"   // Contains configuration settings
 
+#define BUTTON_GPIO 3  // Built-in button
+#define LED_GPIO 2     // Built-in RGB LED
+#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution
+
+// WS2812 timing
+#define WS2812_T0H_NS    350
+#define WS2812_T0L_NS    1000
+#define WS2812_T1H_NS    1000
+#define WS2812_T1L_NS    350
+
 static const char *TAG = "light_sensor";
 static esp_mqtt_client_handle_t mqtt_client = NULL;
-
 typedef struct {
     int max_value;      // Highest value seen during burst
     int min_value;      // Lowest value seen during burst
 } sensor_data_t;
+
+// LED control structures
+typedef struct {
+    uint32_t resolution; // Counter clock resolution (Hz)
+    uint32_t t0h_ticks; // Number of ticks for T0H timing
+    uint32_t t0l_ticks; // Number of ticks for T0L timing
+    uint32_t t1h_ticks; // Number of ticks for T1H timing
+    uint32_t t1l_ticks; // Number of ticks for T1L timing
+} ws2812_timing_t;
+
+typedef struct {
+    uint8_t g;        // Green first
+    uint8_t r;        // Red second
+    uint8_t b;        // Blue third
+} __attribute__((packed)) led_color_t;
+
+// Function to initialize LED
+static void init_led(void) {
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << LED_GPIO),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&io_conf));
+    gpio_set_level(LED_GPIO, 0); // Turn off LED initially
+}
+
+// Function to set LED state
+static void set_led_state(bool on) {
+    gpio_set_level(LED_GPIO, on);
+}
+
+// Diagnostic mode function
+static void diagnostic_mode(adc_oneshot_unit_handle_t adc1_handle) {
+    printf("\nEntering diagnostic mode - Press reset button to exit\n");
+    printf("Trap threshold: %d\n", TRAP_THRESHOLD);
+    printf("Battery threshold: %d\n", BATTERY_THRESHOLD);
+    
+    while (1) {
+        int reading1, reading2;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LDR1_ADC_CHANNEL, &reading1));
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LDR2_ADC_CHANNEL, &reading2));
+        
+        bool trap_triggered = (reading1 > TRAP_THRESHOLD);
+        bool battery_low = (reading2 > BATTERY_THRESHOLD);
+        
+        // Update LED state based on sensor states
+        set_led_state(trap_triggered || battery_low); // LED on if either sensor triggered
+        
+        printf("Trap sensor: %d (%s), Battery sensor: %d (%s)\n",
+               reading1, trap_triggered ? "TRIGGERED" : "ready",
+               reading2, battery_low ? "LOW" : "ok");
+        
+        vTaskDelay(pdMS_TO_TICKS(500)); // Update every 500ms
+    }
+}
 
 // Function declarations
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
@@ -368,6 +436,19 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
+    // Initialize button GPIO
+    gpio_config_t btn_config = {
+        .pin_bit_mask = (1ULL << BUTTON_GPIO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&btn_config));
+    
+    // Initialize LED
+    init_led();
+
     // ADC init
     adc_oneshot_unit_handle_t adc1_handle;
     adc_oneshot_unit_init_cfg_t init_config1 = {
@@ -384,6 +465,46 @@ void app_main(void)
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, LDR2_ADC_CHANNEL, &config));
 
     sensor_data_t sensor1_data, sensor2_data;
+
+    // Give a 3 second window to press button for diagnostic mode
+    printf("\n=== DIAGNOSTIC MODE ===\n");
+    printf("Press the button within 3 seconds to enter diagnostic mode\n");
+    printf("LED will blink while waiting for button press\n");
+    printf("Waiting: ");
+    fflush(stdout);
+    
+    int check_count = 0;
+    while (check_count < 30) { // 30 * 100ms = 3 seconds
+        // Print countdown every second
+        if (check_count % 10 == 0) {
+            printf("%d... ", 3 - (check_count / 10));
+            fflush(stdout);
+        }
+        
+        // Blink LED to show we're waiting for button
+        set_led_state(check_count % 2);
+        
+        // Check button state
+        if (gpio_get_level(BUTTON_GPIO) == 0) { // Button is active low
+            // Visual feedback - LED on solid
+            set_led_state(1);
+            printf("\nButton pressed! Entering diagnostic mode\n");
+            printf("======================\n\n");
+            vTaskDelay(pdMS_TO_TICKS(100)); // Debounce delay
+            diagnostic_mode(adc1_handle);
+            // If we ever exit diagnostic mode, restart the device
+            esp_restart();
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(100)); // Wait 100ms between checks
+        if (check_count % 20 == 0) { // Print countdown every second (20 * 50ms = 1s)
+            printf("%d... ", 3 - (check_count / 20));
+            fflush(stdout);
+        }
+        check_count++;
+    }
+    printf("\nContinuing with normal operation\n");
+    printf("============================\n\n");
 
     while (1) {
         // Perform burst sampling

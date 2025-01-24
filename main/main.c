@@ -259,9 +259,10 @@ static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2)
     bool trap_triggered = (sensor1->max_value > TRAP_THRESHOLD);
     bool battery_low = (sensor2->max_value > BATTERY_THRESHOLD);
     
-    // Store states in RTC memory to persist during deep sleep
+    // Store states and initialization flag in RTC memory to persist during deep sleep
     RTC_DATA_ATTR static bool last_trap_state = false;
     RTC_DATA_ATTR static bool last_battery_state = false;
+    RTC_DATA_ATTR static bool initialized = false;
 
     if (DEBUG_LOGS) {
         ESP_LOGI(TAG, "Current states - Trap: %s, Battery: %s",
@@ -272,13 +273,18 @@ static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2)
                  last_battery_state ? "low" : "ok");
     }
 
-    // Check if this is first boot (both states at default false)
-    bool is_first_boot = (!last_trap_state && !last_battery_state);
+    // Check if this is first boot since power-up
+    bool is_first_boot = !initialized;
     
-    // Connect and publish if states changed or on first boot
+    // Connect and publish if states changed or on first power-up
     if (trap_triggered != last_trap_state ||
         battery_low != last_battery_state ||
         is_first_boot) {
+        
+        // Set initialized flag on first boot
+        if (is_first_boot) {
+            initialized = true;
+        }
         
         bool connected = false;
         int retry_count = 0;

@@ -20,7 +20,7 @@
 #define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes
 
 // Threshold configuration
-#define TRAP_THRESHOLD 300    // ADC value above this means trap triggered
-#define BATTERY_THRESHOLD 300 // ADC value above this means low battery
+#define TRAP_THRESHOLD 100    // ADC value above this means trap triggered
+#define BATTERY_THRESHOLD 100 // ADC value above this means low battery
 
 #endif // CONFIG_H

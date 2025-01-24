@@ -33,10 +33,35 @@ esp_err_t led_controller_init(void)
     return ESP_OK;
 }
 
+void led_controller_set_diagnostic_state(bool trap_triggered, bool battery_low)
+{
+    if (trap_triggered && battery_low) {
+        // Yellow for both sensors triggered
+        led_strip_set_pixel(led_strip, 0, 32, 32, 0);
+    } else if (trap_triggered) {
+        // Green for mouse sensor
+        led_strip_set_pixel(led_strip, 0, 0, 32, 0);
+    } else if (battery_low) {
+        // Red for battery sensor
+        led_strip_set_pixel(led_strip, 0, 32, 0, 0);
+    } else {
+        // No sensors triggered, LED off
+        led_strip_clear(led_strip);
+    }
+    led_strip_refresh(led_strip);
+    
+    if (DEBUG_LOGS) {
+        printf("[%s] LED set to %s\n", TAG, 
+            trap_triggered && battery_low ? "YELLOW" :
+            trap_triggered ? "GREEN" :
+            battery_low ? "RED" : "OFF");
+    }
+}
+
 void led_controller_set_state(bool on)
 {
     if (on) {
-        // Set white color at moderate brightness
+        // Set white color at moderate brightness for diagnostic entry blinking
         led_strip_set_pixel(led_strip, 0, 16, 16, 16);
         led_strip_refresh(led_strip);
     } else {

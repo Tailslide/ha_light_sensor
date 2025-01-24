@@ -60,6 +60,9 @@ bool diagnostic_mode_check_entry(void)
         check_count++;
     }
     
+    // Turn off LED before exiting
+    led_controller_set_state(false);
+    
     printf("\nContinuing with normal operation\n");
     printf("============================\n\n");
     return false;
@@ -79,8 +82,8 @@ void diagnostic_mode_run(adc_oneshot_unit_handle_t adc1_handle)
         bool trap_triggered = (reading1 > TRAP_THRESHOLD);
         bool battery_low = (reading2 > BATTERY_THRESHOLD);
         
-        // Update LED state based on sensor states
-        led_controller_set_state(trap_triggered || battery_low); // LED on if either sensor triggered
+        // Update LED with color-coded states
+        led_controller_set_diagnostic_state(trap_triggered, battery_low);
         
         printf("Trap sensor: %d (%s), Battery sensor: %d (%s)\n",
                reading1, trap_triggered ? "TRIGGERED" : "ready",

@@ -13,6 +13,7 @@ An ESP32-based mouse trap monitoring system that integrates with Home Assistant 
 - Automatic state persistence across deep sleep cycles
 - Robust WiFi and MQTT connection handling
 - Modular code structure for better maintainability
+- Configurable debug output
 
 ## Project Structure
 
@@ -75,6 +76,7 @@ main/
    - ADC channels
    - Timing parameters
    - Threshold values
+   - Debug output (DEBUG_LOGS)
 
 4. Build and flash the project:
    ```bash
@@ -82,6 +84,11 @@ main/
    ```
 
 ## Configuration Parameters
+
+### Debug Configuration
+- `DEBUG_LOGS`: Set to 1 to enable debug messages, 0 to disable (default: 0)
+  - When disabled, only essential system messages and diagnostic mode prompts are shown
+  - When enabled, provides detailed operational status messages for debugging
 
 ### MQTT Configuration
 - `MQTT_PORT`: MQTT broker port (default: 1883)
@@ -92,7 +99,6 @@ main/
 - `BURST_DURATION_MS`: Duration of each sampling burst (default: 12000ms)
 - `SAMPLE_INTERVAL_MS`: Interval between samples during burst (default: 20ms)
 - `SLEEP_TIME_SECONDS`: Deep sleep duration between bursts (default: 30 minutes)
-- `FORCE_PUBLISH_INTERVAL_SEC`: Maximum time between state publications (default: 24 hours)
 - `FORCE_PUBLISH_INTERVAL_SEC`: Maximum time between state publications (default: 24 hours)
 
 ### Threshold Configuration
@@ -158,13 +164,18 @@ The device is designed to be power efficient:
 - Only connects to WiFi/MQTT when states change or every 24 hours
 - Configurable sleep duration
 - Minimal wake time with burst sampling
+- UART/Serial interface completely disabled after diagnostic mode check
+- Serial output only enabled during initial boot and diagnostic mode
+- GPIO pins for UART (TX/RX) reset to save power when not in use
 
 ## Troubleshooting
 
 - If the sensor readings are inconsistent, adjust the `TRAP_THRESHOLD` and `BATTERY_THRESHOLD` values in `config.h`
 - For more frequent updates, reduce `SLEEP_TIME_SECONDS`
 - For more accurate readings, increase `BURST_DURATION_MS` or decrease `SAMPLE_INTERVAL_MS`
-- Check the serial output for debugging information and sensor values
+- For detailed operation logs, set `DEBUG_LOGS` to 1 in `config.h`
+  - This will output detailed status messages for WiFi, MQTT, and sensor operations
+  - Note: Critical system messages and diagnostic mode will always be shown regardless of this setting
 - Use the built-in diagnostic mode by holding the boot button during initial power-up (not available during wake from sleep):
   - The RGB LED will indicate sensor states in diagnostic mode:
     - Green: Mouse trap sensor triggered

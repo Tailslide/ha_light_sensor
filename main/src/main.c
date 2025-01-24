@@ -3,6 +3,7 @@
 #include "esp_sleep.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "driver/uart.h"  // Added for UART control
 
 #include "wifi_manager.h"
 #include "mqtt_manager.h"
@@ -114,7 +115,14 @@ void app_main(void)
         ESP_ERROR_CHECK(diagnostic_mode_init());
         ESP_ERROR_CHECK(led_controller_init());
 
-        if (diagnostic_mode_check_entry()) {
+        bool enter_diagnostic = diagnostic_mode_check_entry();
+        
+        // Disable UART immediately if not entering diagnostic mode
+        if (!enter_diagnostic) {
+            uart_driver_delete(UART_NUM_0);  // Remove the UART driver
+            gpio_reset_pin(GPIO_NUM_1);      // Reset TX pin
+            gpio_reset_pin(GPIO_NUM_3);      // Reset RX pin
+        } else {
             diagnostic_mode_run(adc1_handle);
             esp_restart(); // If we ever exit diagnostic mode, restart the device
         }

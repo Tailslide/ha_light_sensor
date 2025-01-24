@@ -42,11 +42,10 @@ main/
 
 ## Hardware Requirements
 
-- ESP32 development board
+- ESP32 development board ( M5Stamp C3)
 - 2x Light Dependent Resistors (LDRs)
 - Voltage divider resistors for LDRs
-- Mouse trap with status LED
-- Battery with status LED
+- Mouse trap with status LED and optional battery status LED (I use the OWL electronic mouse trap)
 
 ## Pin Configuration
 
@@ -80,7 +79,7 @@ main/
 
 4. Build and flash the project:
    ```bash
-   powershell -Command "& {. 'C:\Users\gregp\esp\v5.4\esp-idf\export.ps1'; idf.py build}"
+   powershell -Command "& {. 'C:\Users\myname\esp\v5.4\esp-idf\export.ps1'; idf.py build}"
    ```
 
 ## Configuration Parameters
@@ -110,20 +109,19 @@ main/
 Add the following to your Home Assistant configuration:
 
 ```yaml
-binary_sensor:
-  - platform: mqtt
-    name: "Back Door Mouse Trap"
-    state_topic: "home/mousetrap/backdoor/state"
-    payload_on: "triggered"
-    payload_off: "ready"
-    device_class: occupancy
+mqtt:
+  binary_sensor:
+    - name: "Back Door Mouse Trap"
+      state_topic: "home/mousetrap/backdoor/state"
+      payload_on: "triggered"
+      payload_off: "ready"
+      device_class: occupancy
 
-  - platform: mqtt
-    name: "Back Door Mouse Trap Battery"
-    state_topic: "home/mousetrap/backdoor/battery"
-    payload_on: "low"
-    payload_off: "ok"
-    device_class: battery
+    - name: "Back Door Mouse Trap Battery"
+      state_topic: "home/mousetrap/backdoor/battery"
+      payload_on: "low"
+      payload_off: "ok"
+      device_class: battery
 
 Both sensors will show their last update time in Home Assistant, which can be used to monitor when the device last published its state (either due to state changes or the 24-hour heartbeat).
 

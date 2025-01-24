@@ -41,16 +41,30 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 // MQTT event handler
-static void mqtt_event_handler(void *handler_args, esp_event_base_t base, 
-                             int32_t event_id, void *event_data)
+static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
+                              int32_t event_id, void *event_data)
 {
     esp_mqtt_event_handle_t event = event_data;
+    bool *connection_established = (bool *)handler_args;
+    
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
-            ESP_LOGI(TAG, "MQTT Connected");
+            if (DEBUG_LOGS) ESP_LOGI(TAG, "MQTT Connected");
+            if (connection_established != NULL) {
+                *connection_established = true;
+            }
             break;
         case MQTT_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "MQTT Disconnected");
+            if (DEBUG_LOGS) ESP_LOGI(TAG, "MQTT Disconnected");
+            if (connection_established != NULL) {
+                *connection_established = false;
+            }
+            break;
+        case MQTT_EVENT_ERROR:
+            if (DEBUG_LOGS) ESP_LOGW(TAG, "MQTT Error occurred");
+            break;
+        case MQTT_EVENT_PUBLISHED:
+            if (DEBUG_LOGS) ESP_LOGI(TAG, "MQTT Message published successfully");
             break;
         default:
             break;
@@ -86,7 +100,7 @@ static bool wifi_init(void)
     while (retry_count < 10) { // 10 * 500ms = 5 second timeout
         wifi_ap_record_t ap_info;
         if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-            ESP_LOGI(TAG, "WiFi Connected");
+            if (DEBUG_LOGS) ESP_LOGI(TAG, "WiFi Connected");
             return true;
         }
         vTaskDelay(pdMS_TO_TICKS(500));
@@ -124,9 +138,30 @@ static bool mqtt_init(void)
         return false;
     }
 
-    // Give some time for the connection to establish
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    return true;
+    // Give more time for the connection to establish
+    int retry_count = 0;
+    const int max_retries = 5;  // 5 * 2 seconds = 10 second timeout
+    
+    // Add a flag to track connection state
+    static bool mqtt_connection_established = false;
+    
+    // Update event handler to set the flag
+    esp_mqtt_client_register_event(mqtt_client, MQTT_EVENT_CONNECTED,
+                                 mqtt_event_handler, &mqtt_connection_established);
+    
+    while (retry_count < max_retries && !mqtt_connection_established) {
+        if (DEBUG_LOGS) ESP_LOGI(TAG, "Waiting for MQTT connection... (%d/%d)", retry_count + 1, max_retries);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        retry_count++;
+    }
+    
+    if (mqtt_connection_established) {
+        if (DEBUG_LOGS) ESP_LOGI(TAG, "MQTT connected successfully");
+        return true;
+    }
+    
+    if (DEBUG_LOGS) ESP_LOGW(TAG, "MQTT connection timeout after %d seconds", max_retries * 2);
+    return false;
 }
 
 // Perform burst sampling
@@ -172,33 +207,71 @@ static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2)
     RTC_DATA_ATTR static bool last_trap_state = false;
     RTC_DATA_ATTR static bool last_battery_state = false;
 
-    // Only connect and publish if states have changed
-    if (trap_triggered != last_trap_state || battery_low != last_battery_state) {
+    if (DEBUG_LOGS) {
+        ESP_LOGI(TAG, "Current states - Trap: %s, Battery: %s",
+                 trap_triggered ? "triggered" : "ready",
+                 battery_low ? "low" : "ok");
+        ESP_LOGI(TAG, "Previous states - Trap: %s, Battery: %s",
+                 last_trap_state ? "triggered" : "ready",
+                 last_battery_state ? "low" : "ok");
+    }
+
+    // Check if this is first boot (both states at default false)
+    bool is_first_boot = (!last_trap_state && !last_battery_state);
+    
+    // Connect and publish if states changed or on first boot
+    if (trap_triggered != last_trap_state ||
+        battery_low != last_battery_state ||
+        is_first_boot) {
+        
         bool connected = false;
+        int retry_count = 0;
+        const int max_retries = 3;
         
         // Initialize WiFi and MQTT only when needed
         if (wifi_init()) {
             if (mqtt_init()) {
                 connected = true;
                 
-                // Publish trap state if changed
-                if (trap_triggered != last_trap_state) {
+                // Publish trap state if changed or first boot
+                if (trap_triggered != last_trap_state || is_first_boot) {
                     const char *trap_state = trap_triggered ? "triggered" : "ready";
-                    if (esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_CAUGHT, trap_state, 0, 1, 0) != -1) {
-                        last_trap_state = trap_triggered;
+                    if (DEBUG_LOGS) ESP_LOGI(TAG, "Publishing trap state: %s", trap_state);
+                    
+                    while (retry_count < max_retries) {
+                        if (esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_CAUGHT, trap_state, 0, 1, 1) != -1) {
+                            last_trap_state = trap_triggered;
+                            if (DEBUG_LOGS) ESP_LOGI(TAG, "Successfully published trap state");
+                            break;
+                        }
+                        if (DEBUG_LOGS) ESP_LOGW(TAG, "Failed to publish trap state, attempt %d/%d", retry_count + 1, max_retries);
+                        retry_count++;
+                        vTaskDelay(pdMS_TO_TICKS(1000)); // Wait 1s between retries
                     }
                 }
 
-                // Publish battery state if changed
-                if (battery_low != last_battery_state) {
+                // Reset retry count for battery state
+                retry_count = 0;
+
+                // Publish battery state if changed or first boot
+                if (battery_low != last_battery_state || is_first_boot) {
                     const char *battery_state = battery_low ? "low" : "ok";
-                    if (esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_BATTERY, battery_state, 0, 1, 0) != -1) {
-                        last_battery_state = battery_low;
+                    if (DEBUG_LOGS) ESP_LOGI(TAG, "Publishing battery state: %s", battery_state);
+                    
+                    while (retry_count < max_retries) {
+                        if (esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_BATTERY, battery_state, 0, 1, 1) != -1) {
+                            last_battery_state = battery_low;
+                            if (DEBUG_LOGS) ESP_LOGI(TAG, "Successfully published battery state");
+                            break;
+                        }
+                        if (DEBUG_LOGS) ESP_LOGW(TAG, "Failed to publish battery state, attempt %d/%d", retry_count + 1, max_retries);
+                        retry_count++;
+                        vTaskDelay(pdMS_TO_TICKS(1000)); // Wait 1s between retries
                     }
                 }
 
-                // Wait briefly for messages to be sent
-                vTaskDelay(pdMS_TO_TICKS(500));
+                // Wait longer for messages to be sent
+                vTaskDelay(pdMS_TO_TICKS(2000));
 
                 // Clean shutdown of MQTT
                 esp_mqtt_client_stop(mqtt_client);
@@ -210,13 +283,17 @@ static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2)
         }
         
         if (!connected) {
-            ESP_LOGW(TAG, "Failed to connect - will retry on next state change");
+            if (DEBUG_LOGS) ESP_LOGW(TAG, "Failed to connect - will retry on next state change or state update");
         }
+    } else {
+        if (DEBUG_LOGS) ESP_LOGI(TAG, "No state changes detected, skipping publish");
     }
 
-    // Log states (regardless of whether we published)
-    ESP_LOGI(TAG, "Trap State: %s (value: %d)", trap_triggered ? "triggered" : "ready", sensor1->max_value);
-    ESP_LOGI(TAG, "Battery State: %s (value: %d)", battery_low ? "low" : "ok", sensor2->max_value);
+    // Log states when debug enabled
+    if (DEBUG_LOGS) {
+        ESP_LOGI(TAG, "Trap State: %s (value: %d)", trap_triggered ? "triggered" : "ready", sensor1->max_value);
+        ESP_LOGI(TAG, "Battery State: %s (value: %d)", battery_low ? "low" : "ok", sensor2->max_value);
+    }
 }
 
 void app_main(void)
@@ -254,7 +331,9 @@ void app_main(void)
         publish_sensor_data(&sensor1_data, &sensor2_data);
         
         // Go to deep sleep
-        ESP_LOGI(TAG, "Going to sleep for %d seconds", SLEEP_TIME_SECONDS);
+        if (DEBUG_LOGS) {
+            ESP_LOGI(TAG, "Going to sleep for %d seconds", SLEEP_TIME_SECONDS);
+        }
         esp_deep_sleep(SLEEP_TIME_SECONDS * 1000000);
     }
 }

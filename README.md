@@ -141,6 +141,7 @@ The device is designed to be power efficient:
 - For more accurate readings, increase `BURST_DURATION_MS` or decrease `SAMPLE_INTERVAL_MS`
 - Check the serial output for debugging information and sensor values
 - Use the built-in diagnostic mode by holding the boot button during startup
+- If you encounter build issues with macros in common.h, ensure there are no trailing backslashes at the end of lines
 
 ## License
 

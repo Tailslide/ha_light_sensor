@@ -9,10 +9,4 @@
 #endif
 
 // Common error checking macro
-#define ESP_RETURN_ON_ERROR(x, tag, msg) do {                                \
-        esp_err_t __err_rc = (x);                                           \
-        if (__err_rc != ESP_OK) {                                           \
-            printf("[%s] %s, err=%d\n", tag, msg, __err_rc);               \
-            return __err_rc;                                                \
-        }                                                                   \
-    } while(0)
+#define ESP_RETURN_ON_ERROR(x, tag, msg) do { esp_err_t __err_rc = (x); if (__err_rc != ESP_OK) { printf("[%s] %s, err=%d\n", tag, msg, __err_rc); return __err_rc; } } while(0)

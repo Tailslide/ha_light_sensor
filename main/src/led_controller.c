@@ -45,8 +45,8 @@ void led_controller_set_diagnostic_state(bool trap_triggered, bool battery_low)
         // Red for battery sensor
         led_strip_set_pixel(led_strip, 0, 32, 0, 0);
     } else {
-        // No sensors triggered, LED off
-        led_strip_clear(led_strip);
+        // No sensors triggered, show blue in debug mode
+        led_strip_set_pixel(led_strip, 0, 0, 0, 32);
     }
     led_strip_refresh(led_strip);
     
@@ -54,7 +54,7 @@ void led_controller_set_diagnostic_state(bool trap_triggered, bool battery_low)
         printf("[%s] LED set to %s\n", TAG, 
             trap_triggered && battery_low ? "YELLOW" :
             trap_triggered ? "GREEN" :
-            battery_low ? "RED" : "OFF");
+            battery_low ? "RED" : "BLUE");
     }
 }
 

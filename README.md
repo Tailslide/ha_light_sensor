@@ -146,7 +146,7 @@ The device is designed to be power efficient:
     - Green: Mouse trap sensor triggered
     - Red: Battery sensor triggered
     - Yellow: Both sensors triggered
-    - Off: No sensors triggered
+    - Blue: No sensors triggered
   - LED only activates in diagnostic mode to conserve power during normal operation
   - Diagnostic mode can only be entered during initial power-up, not during wake from sleep cycles
 - If you encounter build issues with macros in common.h, ensure there are no trailing backslashes at the end of lines

@@ -5,25 +5,29 @@
 #define LED_GPIO 2  // Built-in RGB LED
 
 static const char *TAG = "led_controller";
+static led_strip_handle_t led_strip;
 
 esp_err_t led_controller_init(void)
 {
-    gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << LED_GPIO),
-        .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
+    /* LED strip initialization with the GPIO and pixels number*/
+    led_strip_config_t strip_config = {
+        .strip_gpio_num = LED_GPIO,
+        .max_leds = 1, // Single LED on board
     };
     
-    esp_err_t ret = gpio_config(&io_conf);
+    led_strip_rmt_config_t rmt_config = {
+        .resolution_hz = 10 * 1000 * 1000, // 10MHz
+        .flags.with_dma = false,
+    };
+    
+    esp_err_t ret = led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip);
     if (ret != ESP_OK) {
-        if (DEBUG_LOGS) printf("[%s] Failed to configure LED GPIO\n", TAG);
+        if (DEBUG_LOGS) printf("[%s] Failed to initialize LED strip\n", TAG);
         return ret;
     }
 
     // Turn off LED initially
-    gpio_set_level(LED_GPIO, 0);
+    led_strip_clear(led_strip);
     
     if (DEBUG_LOGS) printf("[%s] LED initialized successfully\n", TAG);
     return ESP_OK;
@@ -31,7 +35,14 @@ esp_err_t led_controller_init(void)
 
 void led_controller_set_state(bool on)
 {
-    gpio_set_level(LED_GPIO, on);
+    if (on) {
+        // Set white color at moderate brightness
+        led_strip_set_pixel(led_strip, 0, 16, 16, 16);
+        led_strip_refresh(led_strip);
+    } else {
+        led_strip_clear(led_strip);
+    }
+    
     if (DEBUG_LOGS) printf("[%s] LED set to %s\n", TAG, on ? "ON" : "OFF");
 }
 

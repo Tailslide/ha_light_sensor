@@ -50,6 +50,7 @@ main/
 
 - GPIO4: LDR sensor for trap state detection
 - GPIO1: LDR sensor for battery status detection
+- GPIO2: Built-in RGB LED (using ESP32's led_strip driver)
 
 ## Software Requirements
 

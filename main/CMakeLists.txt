@@ -11,4 +11,5 @@ idf_component_register(
             esp_event
             esp_common
             esp_hw_support
+            led_strip
 )

@@ -161,13 +161,23 @@ The above automation will notify you if the device hasn't reported its state for
 
 The device is designed to be power efficient:
 - Uses deep sleep between readings
+- Uses light sleep during burst sampling instead of active waiting
 - Only connects to WiFi/MQTT when states change or every 24 hours
 - WiFi power save mode (modem sleep) enabled during connections, reducing power consumption by ~60%
 - Configurable sleep duration
-- Minimal wake time with burst sampling
+- Minimal wake time with optimized sampling using sleep modes
 - UART/Serial interface completely disabled after diagnostic mode check
 - Serial output only enabled during initial boot and diagnostic mode
 - GPIO pins for UART (TX/RX) reset to save power when not in use
+
+The dual sleep mode strategy maximizes power efficiency:
+1. Light sleep during burst sampling (20ms intervals)
+   - Reduces power consumption during the 12-second sampling period
+   - Maintains millisecond-level timing accuracy
+   - CPU and most peripherals powered down between samples
+2. Deep sleep between sampling cycles (30 minutes)
+   - Maximum power savings during long idle periods
+   - Only RTC and essential peripherals remain powered
 
 ## Troubleshooting
 

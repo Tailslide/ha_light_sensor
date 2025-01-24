@@ -1,6 +1,8 @@
 #include "sensor_manager.h"
 #include "config.h"
 #include <stdio.h>
+#include "esp_timer.h"
+#include "esp_sleep.h"
 
 static const char *TAG = "sensor_manager";
 
@@ -26,13 +28,13 @@ esp_err_t sensor_manager_init(adc_oneshot_unit_handle_t *adc1_handle)
     return ESP_OK;
 }
 
-void sensor_manager_burst_sample(adc_oneshot_unit_handle_t adc1_handle, 
-                               sensor_data_t *sensor1, 
-                               sensor_data_t *sensor2)
+void sensor_manager_burst_sample(adc_oneshot_unit_handle_t adc1_handle,
+                                sensor_data_t *sensor1,
+                                sensor_data_t *sensor2)
 {
     int reading1, reading2;
-    TickType_t start_time = xTaskGetTickCount();
-    TickType_t burst_ticks = pdMS_TO_TICKS(BURST_DURATION_MS);
+    int64_t start_time = esp_timer_get_time();
+    int64_t elapsed_time = 0;
     
     // Initialize sensor data
     sensor1->max_value = 0;
@@ -41,8 +43,11 @@ void sensor_manager_burst_sample(adc_oneshot_unit_handle_t adc1_handle,
     sensor2->max_value = 0;
     sensor2->min_value = 4095;
 
+    // Configure light sleep wakeup timer
+    esp_sleep_enable_timer_wakeup(SAMPLE_INTERVAL_MS * 1000); // Convert ms to microseconds
+
     // Perform burst sampling
-    while ((xTaskGetTickCount() - start_time) < burst_ticks) {
+    while (elapsed_time < (BURST_DURATION_MS * 1000)) { // Convert ms to microseconds
         if (adc_oneshot_read(adc1_handle, LDR1_ADC_CHANNEL, &reading1) == ESP_OK) {
             // Update min/max values for sensor 1
             if (reading1 > sensor1->max_value) sensor1->max_value = reading1;
@@ -55,7 +60,11 @@ void sensor_manager_burst_sample(adc_oneshot_unit_handle_t adc1_handle,
             if (reading2 < sensor2->min_value) sensor2->min_value = reading2;
         }
 
-        vTaskDelay(pdMS_TO_TICKS(SAMPLE_INTERVAL_MS));
+        // Enter light sleep
+        esp_light_sleep_start();
+        
+        // Update elapsed time after waking
+        elapsed_time = esp_timer_get_time() - start_time;
     }
 
     if (DEBUG_LOGS) {

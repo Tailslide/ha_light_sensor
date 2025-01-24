@@ -7,6 +7,7 @@
 #include "esp_wifi.h"
 #include "esp_sleep.h"
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
 #include "secrets.h"  // Contains WiFi and MQTT credentials
@@ -33,10 +34,32 @@ static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2);
 
 // WiFi event handler
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
-                             int32_t event_id, void *event_data)
+                              int32_t event_id, void *event_data)
 {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
+    if (event_base == WIFI_EVENT) {
+        switch (event_id) {
+            case WIFI_EVENT_STA_START:
+                if (DEBUG_LOGS) ESP_LOGI(TAG, "WiFi station started, attempting to connect...");
+                esp_wifi_connect();
+                break;
+            case WIFI_EVENT_STA_CONNECTED:
+                if (DEBUG_LOGS) ESP_LOGI(TAG, "WiFi station connected to AP");
+                break;
+            case WIFI_EVENT_STA_DISCONNECTED: {
+                wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
+                if (DEBUG_LOGS) ESP_LOGW(TAG, "WiFi disconnected, reason: %d", event->reason);
+                esp_wifi_connect();
+                break;
+            }
+            case WIFI_EVENT_STA_AUTHMODE_CHANGE:
+                if (DEBUG_LOGS) ESP_LOGI(TAG, "WiFi authentication mode changed");
+                break;
+        }
+    } else if (event_base == IP_EVENT) {
+        if (event_id == IP_EVENT_STA_GOT_IP) {
+            ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+            if (DEBUG_LOGS) ESP_LOGI(TAG, "Got IP address: " IPSTR, IP2STR(&event->ip_info.ip));
+        }
     }
 }
 
@@ -81,13 +104,28 @@ static bool wifi_init(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    ESP_LOGI(TAG, "=========================");
+    ESP_LOGI(TAG, "Device MAC: %02x:%02x:%02x:%02x:%02x:%02x",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    ESP_LOGI(TAG, "=========================");
+    if (DEBUG_LOGS) ESP_LOGI(TAG, "Initializing WiFi with SSID: %s", WIFI_SSID);
+    
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
-                                              &wifi_event_handler, NULL));
+                                             &wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                             &wifi_event_handler, NULL));
 
     wifi_config_t wifi_config = {
         .sta = {
             .ssid = WIFI_SSID,
             .password = WIFI_PASS,
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+            .pmf_cfg = {
+                .capable = true,
+                .required = false
+            },
         },
     };
 
@@ -95,21 +133,39 @@ static bool wifi_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    // Wait for connection with timeout
+    if (DEBUG_LOGS) ESP_LOGI(TAG, "WiFi started, waiting for connection...");
+
+    // Wait for connection and IP with timeout
     int retry_count = 0;
-    while (retry_count < 10) { // 10 * 500ms = 5 second timeout
+    const int max_retries = 30; // 30 * 500ms = 15 second timeout
+    bool got_ip = false;
+
+    while (retry_count < max_retries) {
         wifi_ap_record_t ap_info;
+        esp_netif_ip_info_t ip_info;
+        esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+
         if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-            if (DEBUG_LOGS) ESP_LOGI(TAG, "WiFi Connected");
-            return true;
+            if (esp_netif_get_ip_info(netif, &ip_info) == ESP_OK && ip_info.ip.addr != 0) {
+                got_ip = true;
+                if (DEBUG_LOGS) {
+                    ESP_LOGI(TAG, "Connected to AP, RSSI: %d", ap_info.rssi);
+                    ESP_LOGI(TAG, "IP Address: " IPSTR, IP2STR(&ip_info.ip));
+                }
+                break;
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(500));
         retry_count++;
     }
-    
-    ESP_LOGW(TAG, "WiFi connection timeout");
-    esp_wifi_stop();
-    return false;
+
+    if (!got_ip) {
+        ESP_LOGW(TAG, "Failed to get IP address within timeout period");
+        esp_wifi_stop();
+        return false;
+    }
+
+    return true;
 }
 
 // Initialize MQTT

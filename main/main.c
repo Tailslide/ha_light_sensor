@@ -140,33 +140,60 @@ static void burst_sample_sensors(adc_oneshot_unit_handle_t adc1_handle,
 // Publish sensor data to MQTT
 static void publish_sensor_data(sensor_data_t *sensor1, sensor_data_t *sensor2)
 {
-    char data[32];
-
-    // Publish raw values for both sensors
-    snprintf(data, sizeof(data), "%d", sensor1->max_value);
-    esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_CAUGHT, data, 0, 1, 0);
+    // Check if states have changed
+    bool trap_triggered = (sensor1->max_value > TRAP_THRESHOLD);
+    bool battery_low = (sensor2->max_value > BATTERY_THRESHOLD);
     
-    snprintf(data, sizeof(data), "%d", sensor2->max_value);
-    esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_BATTERY, data, 0, 1, 0);
+    // Store states in RTC memory to persist during deep sleep
+    RTC_DATA_ATTR static bool last_trap_state = false;
+    RTC_DATA_ATTR static bool last_battery_state = false;
 
-    // Log sensor values
-    ESP_LOGI(TAG, "Sensor1 (Caught) - Max: %d", sensor1->max_value);
-    ESP_LOGI(TAG, "Sensor2 (Battery) - Max: %d", sensor2->max_value);
+    // Only connect and publish if states have changed
+    if (trap_triggered != last_trap_state || battery_low != last_battery_state) {
+        // Initialize WiFi and MQTT only when needed
+        wifi_init();
+        mqtt_init();
+        
+        // Wait for connection
+        vTaskDelay(pdMS_TO_TICKS(2000));  // Give time for connections to establish
+
+        // Publish trap state if changed
+        if (trap_triggered != last_trap_state) {
+            const char *trap_state = trap_triggered ? "triggered" : "ready";
+            esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_CAUGHT, trap_state, 0, 1, 0);
+            last_trap_state = trap_triggered;
+        }
+
+        // Publish battery state if changed
+        if (battery_low != last_battery_state) {
+            const char *battery_state = battery_low ? "low" : "ok";
+            esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_BATTERY, battery_state, 0, 1, 0);
+            last_battery_state = battery_low;
+        }
+
+        // Wait for messages to be sent
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
+        // Clean shutdown of connections
+        esp_mqtt_client_stop(mqtt_client);
+        esp_mqtt_client_destroy(mqtt_client);
+        esp_wifi_stop();
+    }
+
+    // Log states (regardless of whether we published)
+    ESP_LOGI(TAG, "Trap State: %s (value: %d)", trap_triggered ? "triggered" : "ready", sensor1->max_value);
+    ESP_LOGI(TAG, "Battery State: %s (value: %d)", battery_low ? "low" : "ok", sensor2->max_value);
 }
 
 void app_main(void)
 {
-    // Initialize NVS
+    // Initialize NVS (needed for WiFi)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-
-    // Initialize WiFi and MQTT
-    wifi_init();
-    mqtt_init();
 
     // ADC init
     adc_oneshot_unit_handle_t adc1_handle;
@@ -189,7 +216,7 @@ void app_main(void)
         // Perform burst sampling
         burst_sample_sensors(adc1_handle, &sensor1_data, &sensor2_data);
         
-        // Publish results
+        // Publish results (only connects if state changed)
         publish_sensor_data(&sensor1_data, &sensor2_data);
         
         // Go to deep sleep

@@ -5,18 +5,22 @@
 // MQTT configuration
 #define MQTT_PORT (1883)
 
-// MQTT topics for mouse trap monitoring
-#define MQTT_TOPIC_CAUGHT "home/mousetrap/backdoor/caught"    // Caught LED sensor
-#define MQTT_TOPIC_BATTERY "home/mousetrap/backdoor/battery"  // Battery LED sensor
+// MQTT topics - use specific states for easy automation
+#define MQTT_TOPIC_CAUGHT "home/mousetrap/backdoor/state"     // sends "triggered" or "ready"
+#define MQTT_TOPIC_BATTERY "home/mousetrap/backdoor/battery"  // sends "low" or "ok"
 
 // ADC configuration
 #define LDR1_ADC_CHANNEL ADC_CHANNEL_4  // GPIO4 - Mouse trap caught LED
 #define LDR2_ADC_CHANNEL ADC_CHANNEL_1  // GPIO1 - Battery LED
 #define ADC_ATTEN ADC_ATTEN_DB_12       // Full range: 0-3.3V
 
-// Sampling configuration
-#define BURST_DURATION_MS 12000   // Sample for 12 seconds (longer than LED flash cycle)
-#define SAMPLE_INTERVAL_MS 20     // Sample every 20ms during burst
-#define SLEEP_TIME_SECONDS 600    // Sleep for 10 minutes
+// Timing configuration
+#define BURST_DURATION_MS 12000         // Sample for 12 seconds
+#define SAMPLE_INTERVAL_MS 20           // Sample every 20ms during burst
+#define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes
+
+// Threshold configuration
+#define TRAP_THRESHOLD 300    // ADC value above this means trap triggered
+#define BATTERY_THRESHOLD 300 // ADC value above this means low battery
 
 #endif // CONFIG_H

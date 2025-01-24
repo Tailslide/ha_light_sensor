@@ -4,6 +4,7 @@
 #include "driver/gpio.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "led_strip.h"
 
 // Initialize LED GPIO
 esp_err_t led_controller_init(void);

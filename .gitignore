@@ -3,5 +3,7 @@
 /build
 /sdkconfig
 /sdkconfig.ci
+/managed_components
 secrets.h
 config.h
+*.lock

@@ -8,6 +8,7 @@ An ESP32-based mouse trap monitoring system that integrates with Home Assistant 
 - Monitors battery status (ok/low) using a second LDR sensor
 - Integrates with Home Assistant via MQTT
 - Power-efficient design with deep sleep between readings
+- 24-hour heartbeat publishing to ensure device health monitoring
 - Configurable sampling parameters and thresholds
 - Automatic state persistence across deep sleep cycles
 - Robust WiFi and MQTT connection handling
@@ -91,6 +92,8 @@ main/
 - `BURST_DURATION_MS`: Duration of each sampling burst (default: 12000ms)
 - `SAMPLE_INTERVAL_MS`: Interval between samples during burst (default: 20ms)
 - `SLEEP_TIME_SECONDS`: Deep sleep duration between bursts (default: 30 minutes)
+- `FORCE_PUBLISH_INTERVAL_SEC`: Maximum time between state publications (default: 24 hours)
+- `FORCE_PUBLISH_INTERVAL_SEC`: Maximum time between state publications (default: 24 hours)
 
 ### Threshold Configuration
 - `TRAP_THRESHOLD`: ADC threshold for trap triggered state (default: 300)
@@ -115,23 +118,44 @@ binary_sensor:
     payload_on: "low"
     payload_off: "ok"
     device_class: battery
+
+Both sensors will show their last update time in Home Assistant, which can be used to monitor when the device last published its state (either due to state changes or the 24-hour heartbeat).
+
+You can create an automation to monitor device health using the last update time:
+```yaml
+automation:
+  - alias: "Mouse Trap Device Offline Alert"
+    trigger:
+      - platform: template
+        value_template: >
+          {% set last_updated = states('binary_sensor.back_door_mouse_trap').last_updated %}
+          {% set hours_since = ((now() - last_updated) | as_timedelta).total_seconds() / 3600 %}
+          {{ hours_since > 25 }}
+    action:
+      - service: notify.notify
+        data:
+          message: "Mouse trap device hasn't reported in over 25 hours"
+```
+
+The above automation will notify you if the device hasn't reported its state for more than 25 hours (allowing a small buffer over the 24-hour heartbeat).
 ```
 
 ## Operation
 
 1. The device wakes up every 30 minutes (configurable)
 2. Performs burst sampling for 12 seconds to detect LED states
-3. If any state has changed (trap triggered or battery low):
+3. If any state has changed (trap triggered or battery low) or 24 hours have elapsed since last publish:
    - Connects to WiFi
    - Connects to MQTT broker
-   - Publishes the new state(s)
+   - Publishes the current state(s)
+   - Updates last publish timestamp
 4. Goes back to deep sleep to conserve power
 
 ## Power Consumption
 
 The device is designed to be power efficient:
 - Uses deep sleep between readings
-- Only connects to WiFi/MQTT when states change
+- Only connects to WiFi/MQTT when states change or every 24 hours
 - Configurable sleep duration
 - Minimal wake time with burst sampling
 

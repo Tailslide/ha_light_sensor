@@ -2,6 +2,7 @@
 #include "nvs_flash.h"
 #include "esp_sleep.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 
 #include "wifi_manager.h"
 #include "mqtt_manager.h"
@@ -16,6 +17,7 @@ static const char *TAG = "main";
 RTC_DATA_ATTR static bool last_trap_state = false;
 RTC_DATA_ATTR static bool last_battery_state = false;
 RTC_DATA_ATTR static bool initialized = false;
+RTC_DATA_ATTR static int64_t last_publish_time = 0;
 
 static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2)
 {
@@ -34,10 +36,15 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
     // Check if this is first boot since power-up
     bool is_first_boot = !initialized;
     
-    // Connect and publish if states changed or on first power-up
+    // Get current time in microseconds
+    int64_t current_time = esp_timer_get_time();
+    int64_t elapsed_time = (current_time - last_publish_time) / 1000000; // Convert to seconds
+    
+    // Connect and publish if states changed, first power-up, or 24 hours elapsed
     if (trap_triggered != last_trap_state ||
         battery_low != last_battery_state ||
-        is_first_boot) {
+        is_first_boot ||
+        elapsed_time >= FORCE_PUBLISH_INTERVAL_SEC) {
         
         // Set initialized flag on first boot
         if (is_first_boot) {
@@ -77,6 +84,9 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
                     }
                 }
 
+                // Update last publish time
+                last_publish_time = esp_timer_get_time();
+                
                 // Wait for messages to be sent
                 vTaskDelay(pdMS_TO_TICKS(2000));
                 mqtt_manager_cleanup();

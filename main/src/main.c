@@ -102,10 +102,12 @@ void app_main(void)
     adc_oneshot_unit_handle_t adc1_handle;
     ESP_ERROR_CHECK(sensor_manager_init(&adc1_handle));
 
-    // Check for diagnostic mode entry
-    if (diagnostic_mode_check_entry()) {
-        diagnostic_mode_run(adc1_handle);
-        esp_restart(); // If we ever exit diagnostic mode, restart the device
+    // Check for diagnostic mode entry only on first power-up
+    if (!initialized) {
+        if (diagnostic_mode_check_entry()) {
+            diagnostic_mode_run(adc1_handle);
+            esp_restart(); // If we ever exit diagnostic mode, restart the device
+        }
     }
 
     // Main operation loop

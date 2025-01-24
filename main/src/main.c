@@ -45,6 +45,14 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
         }
         
         bool connected = false;
+
+        // Initialize NVS (needed for WiFi)
+        esp_err_t ret = nvs_flash_init();
+        if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            ret = nvs_flash_init();
+        }
+        ESP_ERROR_CHECK(ret);
         
         // Initialize WiFi and MQTT only when needed
         if (wifi_manager_init()) {
@@ -86,24 +94,16 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
 
 void app_main(void)
 {
-    // Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-
-    // Initialize diagnostic button and LED
-    ESP_ERROR_CHECK(diagnostic_mode_init());
-    ESP_ERROR_CHECK(led_controller_init());
-
     // Initialize ADC
     adc_oneshot_unit_handle_t adc1_handle;
     ESP_ERROR_CHECK(sensor_manager_init(&adc1_handle));
 
-    // Check for diagnostic mode entry only on first power-up
+    // Only on first power-up: Initialize diagnostic mode and check for entry
     if (!initialized) {
+        // Initialize diagnostic button and LED
+        ESP_ERROR_CHECK(diagnostic_mode_init());
+        ESP_ERROR_CHECK(led_controller_init());
+
         if (diagnostic_mode_check_entry()) {
             diagnostic_mode_run(adc1_handle);
             esp_restart(); // If we ever exit diagnostic mode, restart the device

@@ -101,8 +101,9 @@ main/
 - `FORCE_PUBLISH_INTERVAL_SEC`: Maximum time between state publications (default: 24 hours)
 
 ### Threshold Configuration
-- `TRAP_THRESHOLD`: ADC threshold for trap triggered state (default: 300)
-- `BATTERY_THRESHOLD`: ADC threshold for low battery state (default: 300)
+- `TRAP_THRESHOLD`: ADC threshold for trap triggered state (default: 50)
+- `BATTERY_THRESHOLD`: ADC threshold for low battery state (default: 200)
+- Note: These thresholds are calibrated for dark room conditions with the LDR pointed at a black surface. You may need to adjust based on your specific setup and ambient light conditions.
 
 ## Home Assistant Configuration
 
@@ -112,16 +113,19 @@ Add the following to your Home Assistant configuration:
 mqtt:
   binary_sensor:
     - name: "Back Door Mouse Trap"
+      unique_id: "backdoor_mousetrap_state"
       state_topic: "home/mousetrap/backdoor/state"
       payload_on: "triggered"
       payload_off: "ready"
       device_class: occupancy
 
     - name: "Back Door Mouse Trap Battery"
+      unique_id: "backdoor_mousetrap_battery"  # Added this line
       state_topic: "home/mousetrap/backdoor/battery"
       payload_on: "low"
       payload_off: "ok"
-      device_class: battery
+      device_class: problem
+      expire_after: 129600  # 36 hours in seconds
 
 Both sensors will show their last update time in Home Assistant, which can be used to monitor when the device last published its state (either due to state changes or the 24-hour heartbeat).
 

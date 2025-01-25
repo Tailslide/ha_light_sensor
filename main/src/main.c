@@ -70,6 +70,8 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
                 // Publish trap state if changed or first boot
                 if (trap_triggered != last_trap_state || is_first_boot) {
                     const char *trap_state = trap_triggered ? "triggered" : "ready";
+                    if (DEBUG_LOGS) printf("[%s] Publishing trap state: %s to topic: %s\n",
+                                         TAG, trap_state, MQTT_TOPIC_CAUGHT);
                     if (mqtt_manager_publish(MQTT_TOPIC_CAUGHT, trap_state, 1, 1)) {
                         last_trap_state = trap_triggered;
                         if (DEBUG_LOGS) printf("[%s] Successfully published trap state\n", TAG);
@@ -79,6 +81,8 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
                 // Publish battery state if changed or first boot
                 if (battery_low != last_battery_state || is_first_boot) {
                     const char *battery_state = battery_low ? "low" : "ok";
+                    if (DEBUG_LOGS) printf("[%s] Publishing battery state: %s to topic: %s\n",
+                                         TAG, battery_state, MQTT_TOPIC_BATTERY);
                     if (mqtt_manager_publish(MQTT_TOPIC_BATTERY, battery_state, 1, 1)) {
                         last_battery_state = battery_low;
                         if (DEBUG_LOGS) printf("[%s] Successfully published battery state\n", TAG);

@@ -6,4 +6,5 @@
 /managed_components
 secrets.h
 config.h
+traps/*/config.h
 *.lock

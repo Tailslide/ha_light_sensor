@@ -1,0 +1,45 @@
+// config.h - Device configuration (safe to check into source control)
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Trap Identity
+#define TRAP_ID "garage_near"
+#define TRAP_FRIENDLY_NAME "Garage Near"
+
+// Set to 1 to enable debug logs, 0 to disable
+#define DEBUG_LOGS 1
+
+// MQTT configuration
+#define MQTT_PORT (1883)
+
+// MQTT topics - use specific states for easy automation
+#define MQTT_TOPIC_CAUGHT "home/mousetrap/garage_near/state"     // sends "triggered" or "ready"
+#define MQTT_TOPIC_BATTERY "home/mousetrap/garage_near/battery"  // sends "low" or "ok"
+
+// M5Stamp C3 Pin Configuration
+#define BUTTON_PIN GPIO_NUM_9           // Built-in button
+#define RGB_LED_PIN GPIO_NUM_2          // Built-in WS2812 RGB LED
+
+// ADC configuration
+#define LDR1_ADC_CHANNEL ADC_CHANNEL_4  // GPIO4 - Mouse trap caught LED
+#define LDR2_ADC_CHANNEL ADC_CHANNEL_1  // GPIO1 - Battery LED
+#define ADC_ATTEN ADC_ATTEN_DB_12       // Full range: 0-3.3V
+
+// LED Colors (RGB format)
+#define LED_COLOR_OFF    0x000000
+#define LED_COLOR_RED    0xFF0000
+#define LED_COLOR_GREEN  0x00FF00
+#define LED_COLOR_BLUE   0x0000FF
+#define LED_COLOR_YELLOW 0xFFFF00
+
+// Timing configuration
+#define BURST_DURATION_MS 12000         // Sample for 12 seconds
+#define SAMPLE_INTERVAL_MS 20           // Sample every 20ms during burst
+#define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes
+#define FORCE_PUBLISH_INTERVAL_SEC (24 * 60 * 60)  // Force publish every 24 hours
+
+// Threshold configuration - starting with same values, adjust based on location
+#define TRAP_THRESHOLD 50    // ADC value above this means trap triggered
+#define BATTERY_THRESHOLD 200 // ADC value above this means low battery
+
+#endif // CONFIG_H

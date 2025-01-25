@@ -60,26 +60,69 @@ main/
 
 ## Setup Instructions
 
+The project now supports multiple mouse traps with individual configurations. Each trap has its own configuration directory under `traps/`.
+
+### Available Traps
+- `backdoor` - Back door mouse trap (original)
+- `garage_near` - Garage near entrance trap
+- Additional traps can be added by copying the `template` directory
+
+### Setting Up a New Trap
+
 1. Clone this repository
-2. Copy `main/secrets.h.template` to `main/secrets.h` and configure your WiFi and MQTT credentials:
-   ```c
-   #define WIFI_SSID "your_wifi_ssid"
-   #define WIFI_PASS "your_wifi_password"
-   #define MQTT_BROKER "your.mqtt.broker.ip"
-   #define MQTT_USERNAME "your_mqtt_username"
-   #define MQTT_PASSWORD "your_mqtt_password"
+
+2. Choose a trap to build:
+   - Use existing traps in `traps/` directory
+   - Or create a new trap by copying `traps/template`:
+     ```
+     copy traps\template traps\your_new_trap
+     ```
+
+3. Configure the trap:
+   a. Copy `traps/your_trap/secrets.h.template` to `secrets.h` in the same directory:
+      ```c
+      #define WIFI_SSID "your_wifi_ssid"
+      #define WIFI_PASS "your_wifi_password"
+      #define MQTT_BROKER "your.mqtt.broker.ip"
+      #define MQTT_USERNAME "your_mqtt_username"
+      #define MQTT_PASSWORD "your_mqtt_password"
+      ```
+   b. Edit `traps/your_trap/config.h`:
+      - Set TRAP_ID and TRAP_FRIENDLY_NAME
+      - Adjust MQTT topics
+      - Modify thresholds if needed
+      - Configure other parameters as needed
+
+4. Build and flash for a specific trap:
+   ```bash
+   # For backdoor trap (default if no trap specified)
+   powershell -Command "& {. 'C:\Users\username\esp\v5.4\esp-idf\export.ps1'; idf.py build flash}"
+
+   # For garage near trap (clean first when switching targets)
+   powershell -Command "& {. 'C:\Users\username\esp\v5.4\esp-idf\export.ps1'; idf.py clean; idf.py -DTRAP_ID=garage_near build flash}"
    ```
 
-3. (Optional) Copy `main/config.h.template` to `main/config.h` and adjust the configuration parameters if needed:
-   - MQTT topics
-   - ADC channels
-   - Timing parameters
-   - Threshold values
-   - Debug output (DEBUG_LOGS)
+   Note: Always run `idf.py clean` before building for a different trap target to ensure the correct configuration is used.
 
-4. Build and flash the project:
+### Adding More Traps
+
+1. Copy the template directory:
+   ```
+   copy traps\template traps\new_trap_name
+   ```
+
+2. Edit the new trap's config.h:
+   - Update TRAP_ID (use underscores, e.g., garage_far)
+   - Update TRAP_FRIENDLY_NAME
+   - Update MQTT topics
+   - Adjust thresholds based on location
+
+3. Configure secrets.h as above
+
+4. Build using:
    ```bash
-   powershell -Command "& {. 'C:\Users\myname\esp\v5.4\esp-idf\export.ps1'; idf.py build}"
+   # Clean first when switching from another target
+   powershell -Command "& {. 'C:\Users\username\esp\v5.4\esp-idf\export.ps1'; idf.py clean; idf.py -DTRAP_ID=new_trap_name build flash}"
    ```
 
 ## Configuration Parameters
@@ -107,11 +150,12 @@ main/
 
 ## Home Assistant Configuration
 
-Add the following to your Home Assistant configuration:
+Add configurations for each trap to your Home Assistant configuration. Here's the complete setup for both existing traps:
 
 ```yaml
 mqtt:
   binary_sensor:
+    # Back Door Trap
     - name: "Back Door Mouse Trap"
       unique_id: "backdoor_mousetrap_state"
       state_topic: "home/mousetrap/backdoor/state"
@@ -120,14 +164,46 @@ mqtt:
       device_class: occupancy
 
     - name: "Back Door Mouse Trap Battery"
-      unique_id: "backdoor_mousetrap_battery"  # Added this line
+      unique_id: "backdoor_mousetrap_battery"
       state_topic: "home/mousetrap/backdoor/battery"
       payload_on: "low"
       payload_off: "ok"
       device_class: problem
       expire_after: 129600  # 36 hours in seconds
 
-Both sensors will show their last update time in Home Assistant, which can be used to monitor when the device last published its state (either due to state changes or the 24-hour heartbeat).
+    # Garage Near Trap
+    - name: "Garage Near Mouse Trap"
+      unique_id: "garage_near_mousetrap_state"
+      state_topic: "home/mousetrap/garage_near/state"
+      payload_on: "triggered"
+      payload_off: "ready"
+      device_class: occupancy
+
+    - name: "Garage Near Mouse Trap Battery"
+      unique_id: "garage_near_mousetrap_battery"
+      state_topic: "home/mousetrap/garage_near/battery"
+      payload_on: "low"
+      payload_off: "ok"
+      device_class: problem
+      expire_after: 129600  # 36 hours in seconds
+
+# Template for additional traps (copy and modify for each new trap):
+    # - name: "New Location Mouse Trap"
+    #   unique_id: "new_location_mousetrap_state"
+    #   state_topic: "home/mousetrap/new_location/state"
+    #   payload_on: "triggered"
+    #   payload_off: "ready"
+    #   device_class: occupancy
+    #
+    # - name: "New Location Mouse Trap Battery"
+    #   unique_id: "new_location_mousetrap_battery"
+    #   state_topic: "home/mousetrap/new_location/battery"
+    #   payload_on: "low"
+    #   payload_off: "ok"
+    #   device_class: problem
+    #   expire_after: 129600  # 36 hours in seconds
+
+Each trap's sensors will show their last update time in Home Assistant, which can be used to monitor when the device last published its state (either due to state changes or the 24-hour heartbeat).
 
 You can create an automation to monitor device health using the last update time:
 ```yaml

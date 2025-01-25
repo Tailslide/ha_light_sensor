@@ -20,24 +20,32 @@ An ESP32-based mouse trap monitoring system that integrates with Home Assistant 
 The project follows a modular architecture for better organization and maintainability:
 
 ```
-main/
-├── include/                 # Header files
-│   ├── common.h            # Common definitions and utilities
-│   ├── wifi_manager.h      # WiFi connection management
-│   ├── mqtt_manager.h      # MQTT client operations
-│   ├── sensor_manager.h    # ADC and sensor handling
-│   ├── led_controller.h    # LED control functions
-│   └── diagnostic.h        # Diagnostic mode operations
-├── src/                    # Source files
-│   ├── main.c             # Main application entry
-│   ├── wifi_manager.c     # WiFi implementation
-│   ├── mqtt_manager.c     # MQTT implementation
-│   ├── sensor_manager.c   # Sensor implementation
-│   ├── led_controller.c   # LED implementation
-│   └── diagnostic.c       # Diagnostic implementation
-├── CMakeLists.txt         # Component build configuration
-├── config.h.template      # Configuration template
-└── secrets.h.template     # Credentials template
+├── main/                  # Core application code
+│   ├── include/          # Header files
+│   │   ├── common.h     # Common definitions and utilities
+│   │   ├── wifi_manager.h # WiFi connection management
+│   │   ├── mqtt_manager.h # MQTT client operations
+│   │   ├── sensor_manager.h # ADC and sensor handling
+│   │   ├── led_controller.h # LED control functions
+│   │   └── diagnostic.h  # Diagnostic mode operations
+│   ├── src/             # Source files
+│   │   ├── main.c      # Main application entry
+│   │   ├── wifi_manager.c # WiFi implementation
+│   │   ├── mqtt_manager.c # MQTT implementation
+│   │   ├── sensor_manager.c # Sensor implementation
+│   │   ├── led_controller.c # LED implementation
+│   │   └── diagnostic.c # Diagnostic implementation
+│   └── CMakeLists.txt   # Component build configuration
+└── traps/               # Trap-specific configurations
+    ├── backdoor/       # Back door trap config
+    │   ├── config.h.template # Configuration template
+    │   └── secrets.h.template # Credentials template
+    ├── garage_near/    # Garage near trap config
+    │   ├── config.h.template # Configuration template
+    │   └── secrets.h.template # Credentials template
+    └── template/       # Template for new traps
+        ├── config.h.template # Configuration template
+        └── secrets.h.template # Credentials template
 ```
 
 ## Hardware Requirements

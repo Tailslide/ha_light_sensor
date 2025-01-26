@@ -220,13 +220,15 @@ automation:
     trigger:
       - platform: template
         value_template: >
-          {% set last_updated = states('binary_sensor.back_door_mouse_trap').last_updated %}
-          {% set hours_since = ((now() - last_updated) | as_timedelta).total_seconds() / 3600 %}
+          {% set last_changed = states.binary_sensor.back_door_mouse_trap.last_changed %}
+          {% set hours_since = ((now() - last_changed) | as_timedelta).total_seconds() / 3600 %}
           {{ hours_since > 25 }}
     action:
       - service: notify.notify
         data:
-          message: "Mouse trap device hasn't reported in over 25 hours"
+          message: >-
+            Mouse trap device hasn't reported in over 25 hours. Last report was
+            {{ states.binary_sensor.back_door_mouse_trap.last_changed | as_local }}
 ```
 
 The above automation will notify you if the device hasn't reported its state for more than 25 hours (allowing a small buffer over the 24-hour heartbeat).

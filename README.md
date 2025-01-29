@@ -170,6 +170,7 @@ mqtt:
       payload_on: "triggered"
       payload_off: "ready"
       device_class: occupancy
+      expire_after: 129600  # 36 hours in seconds
 
     - name: "Back Door Mouse Trap Battery"
       unique_id: "backdoor_mousetrap_battery"
@@ -186,6 +187,7 @@ mqtt:
       payload_on: "triggered"
       payload_off: "ready"
       device_class: occupancy
+      expire_after: 129600  # 36 hours in seconds
 
     - name: "Garage Near Mouse Trap Battery"
       unique_id: "garage_near_mousetrap_battery"
@@ -202,6 +204,7 @@ mqtt:
     #   payload_on: "triggered"
     #   payload_off: "ready"
     #   device_class: occupancy
+    #   expire_after: 129600  # 36 hours in seconds
     #
     # - name: "New Location Mouse Trap Battery"
     #   unique_id: "new_location_mousetrap_battery"
@@ -210,29 +213,36 @@ mqtt:
     #   payload_off: "ok"
     #   device_class: problem
     #   expire_after: 129600  # 36 hours in seconds
+```
 
-Each trap's sensors will show their last update time in Home Assistant, which can be used to monitor when the device last published its state (either due to state changes or the 24-hour heartbeat).
+The `expire_after` setting ensures that sensors will automatically become `unavailable` if no message is received within 36 hours. This provides built-in monitoring of device health, accounting for the 24-hour heartbeat with a 12-hour buffer.
 
-You can create an automation to monitor device health using the last update time:
+You can create automations to monitor device health using the unavailable state:
+
 ```yaml
 automation:
-  - alias: "Mouse Trap Device Offline Alert"
+  - alias: "Back Door Mouse Trap Disconnected"
     trigger:
-      - platform: template
-        value_template: >
-          {% set last_changed = states.binary_sensor.back_door_mouse_trap.last_changed %}
-          {% set hours_since = ((now() - last_changed) | as_timedelta).total_seconds() / 3600 %}
-          {{ hours_since > 25 }}
+      - platform: state
+        entity_id: binary_sensor.back_door_mouse_trap
+        to: unavailable
     action:
       - service: notify.notify
         data:
-          message: >-
-            Mouse trap device hasn't reported in over 25 hours. Last report was
-            {{ states.binary_sensor.back_door_mouse_trap.last_changed | as_local }}
+          message: Your Back Door mouse trap hasn't reported in over 36 hours.
+
+  - alias: "Garage Near Mouse Trap Disconnected"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.garage_near_mouse_trap
+        to: unavailable
+    action:
+      - service: notify.notify
+        data:
+          message: Your Garage Near mouse trap hasn't reported in over 36 hours.
 ```
 
-The above automation will notify you if the device hasn't reported its state for more than 25 hours (allowing a small buffer over the 24-hour heartbeat).
-```
+These automations will notify you if any trap becomes unavailable, which happens automatically after 36 hours without updates (allowing a buffer over the 24-hour heartbeat).
 
 ## Operation
 

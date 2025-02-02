@@ -18,7 +18,11 @@ static const char *TAG = "main";
 RTC_DATA_ATTR static bool last_trap_state = false;
 RTC_DATA_ATTR static bool last_battery_state = false;
 RTC_DATA_ATTR static bool initialized = false;
-RTC_DATA_ATTR static int64_t last_publish_time = 0;
+RTC_DATA_ATTR static uint16_t cycles_since_publish = 0;
+
+// Calculate cycles for heartbeat based on sleep time and configured interval
+#define CYCLES_PER_HOUR (3600 / SLEEP_TIME_SECONDS)
+#define CYCLES_FOR_PUBLISH (CYCLES_PER_HOUR * HEARTBEAT_INTERVAL_HOURS)
 
 static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2)
 {
@@ -37,15 +41,19 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
     // Check if this is first boot since power-up
     bool is_first_boot = !initialized;
     
-    // Get current time in microseconds
-    int64_t current_time = esp_timer_get_time();
-    int64_t elapsed_time = (current_time - last_publish_time) / 1000000; // Convert to seconds
+    // Increment cycle counter
+    cycles_since_publish++;
     
-    // Connect and publish if states changed, first power-up, or 24 hours elapsed
+    if (DEBUG_LOGS) {
+        printf("[%s] Cycles since last publish: %d/%d\n",
+               TAG, cycles_since_publish, CYCLES_FOR_PUBLISH);
+    }
+    
+    // Connect and publish if states changed, first boot, or enough cycles elapsed
     if (trap_triggered != last_trap_state ||
         battery_low != last_battery_state ||
         is_first_boot ||
-        elapsed_time >= FORCE_PUBLISH_INTERVAL_SEC) {
+        cycles_since_publish >= CYCLES_FOR_PUBLISH) {
         
         // Set initialized flag on first boot
         if (is_first_boot) {
@@ -89,8 +97,8 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
                     }
                 }
 
-                // Update last publish time
-                last_publish_time = esp_timer_get_time();
+                // Reset cycle counter after successful publish
+                cycles_since_publish = 0;
                 
                 // Wait for messages to be sent
                 vTaskDelay(pdMS_TO_TICKS(2000));

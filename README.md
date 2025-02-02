@@ -149,7 +149,10 @@ The project now supports multiple mouse traps with individual configurations. Ea
 - `BURST_DURATION_MS`: Duration of each sampling burst (default: 12000ms)
 - `SAMPLE_INTERVAL_MS`: Interval between samples during burst (default: 20ms)
 - `SLEEP_TIME_SECONDS`: Deep sleep duration between bursts (default: 30 minutes)
-- `FORCE_PUBLISH_INTERVAL_SEC`: Maximum time between state publications (default: 24 hours)
+- `HEARTBEAT_INTERVAL_HOURS`: How often to force publish state updates (default: 24 hours)
+- `CYCLES_PER_HOUR`: Automatically calculated based on sleep time (2 cycles per hour with default sleep time)
+- `CYCLES_FOR_PUBLISH`: Automatically calculated based on HEARTBEAT_INTERVAL_HOURS and sleep time
+  (e.g., with 30-minute sleep time and 24-hour interval: 2 cycles/hour * 24 hours = 48 cycles)
 
 ### Threshold Configuration
 - `TRAP_THRESHOLD`: ADC threshold for trap triggered state (default: 50)
@@ -248,11 +251,11 @@ These automations will notify you if any trap becomes unavailable, which happens
 
 1. The device wakes up every 30 minutes (configurable)
 2. Performs burst sampling for 12 seconds to detect LED states
-3. If any state has changed (trap triggered or battery low) or 24 hours have elapsed since last publish:
-   - Connects to WiFi
-   - Connects to MQTT broker
-   - Publishes the current state(s)
-   - Updates last publish timestamp
+3. If any state has changed (trap triggered or battery low) or the configured heartbeat interval has elapsed:
+    - Connects to WiFi
+    - Connects to MQTT broker
+    - Publishes the current state(s)
+    - Resets the cycle counter
 4. Goes back to deep sleep to conserve power
 
 ## Power Consumption

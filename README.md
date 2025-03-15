@@ -6,9 +6,11 @@ An ESP32-based mouse trap monitoring system that integrates with Home Assistant 
 
 - Monitors mouse trap state (triggered/ready) using an LDR sensor
 - Monitors battery status (ok/low) using a second LDR sensor
+- Optional external wake circuit support for immediate trap detection
 - Integrates with Home Assistant via MQTT
 - Power-efficient design with deep sleep between readings
 - 24-hour heartbeat publishing to ensure device health monitoring
+- MQTT will messages for accurate availability tracking
 - Configurable sampling parameters and thresholds
 - Automatic state persistence across deep sleep cycles
 - Robust WiFi and MQTT connection handling
@@ -47,7 +49,6 @@ The project follows a modular architecture for better organization and maintaina
         ├── config.h.template # Configuration template
         └── secrets.h.template # Credentials template
 ```
-
 ## Hardware Requirements
 
 - ESP32 development board ( M5Stamp C3)
@@ -55,10 +56,41 @@ The project follows a modular architecture for better organization and maintaina
 - Voltage divider resistors for LDRs
 - Mouse trap with status LED and optional battery status LED (I use the OWL electronic mouse trap)
 
+### Optional Wake Circuit Components
+- TLV7011 comparator (or similar)
+- GL5539 LDR (recommended for best sensitivity)
+- 10kΩ resistor for LDR voltage divider
+- 10kΩ trim potentiometer for threshold adjustment
+- Connecting wires
+
 ## Pin Configuration
 
-- GPIO4: LDR sensor for trap state detection
+- GPIO4: LDR sensor for trap state detection (not needed if using wake circuit)
 - GPIO1: LDR sensor for battery status detection
+- GPIO2: Built-in RGB LED (using ESP32's led_strip driver)
+- GPIO5: Wake circuit input (when USE_WAKE_CIRCUIT=1)
+
+### Wake Circuit Connections
+If using the optional wake circuit:
+1. TLV7011 Pin 1 (OUT) → ESP32 GPIO5
+2. TLV7011 Pin 2 (VEE) → GND
+3. TLV7011 Pin 3 (IN+) → LDR voltage divider midpoint
+4. TLV7011 Pin 4 (IN-) → Trim pot wiper (middle pin)
+5. TLV7011 Pin 5 (VDD) → 3.3V
+
+LDR Circuit:
+```
+3.3V ----[LDR]----+----[10kΩ]---- GND
+                  |
+                  +---- TLV7011 Pin 3 (IN+)
+```
+
+Trim Pot Circuit:
+```
+3.3V ----[10kΩ Trim Pot]----+---- GND
+                            |
+                            +---- TLV7011 Pin 4 (IN-)
+```
 - GPIO2: Built-in RGB LED (using ESP32's led_strip driver)
 
 ## Software Requirements
@@ -144,6 +176,7 @@ The project now supports multiple mouse traps with individual configurations. Ea
 - `MQTT_PORT`: MQTT broker port (default: 1883)
 - `MQTT_TOPIC_CAUGHT`: Topic for trap state updates (default: "home/mousetrap/backdoor/state")
 - `MQTT_TOPIC_BATTERY`: Topic for battery status updates (default: "home/mousetrap/backdoor/battery")
+- `MQTT_TOPIC_AVAILABILITY`: Topic for device availability status (default: "home/mousetrap/backdoor/availability")
 
 ### Timing Configuration
 - `BURST_DURATION_MS`: Duration of each sampling burst (default: 12000ms)
@@ -159,6 +192,11 @@ The project now supports multiple mouse traps with individual configurations. Ea
 - `BATTERY_THRESHOLD`: ADC threshold for low battery state (default: 200)
 - Note: These thresholds are calibrated for dark room conditions with the LDR pointed at a black surface. You may need to adjust based on your specific setup and ambient light conditions.
 
+### Wake Circuit Configuration
+- `USE_WAKE_CIRCUIT`: Set to 1 to enable external comparator wake circuit, 0 to use standard ADC sampling (default: 0)
+- `WAKE_PIN`: GPIO pin connected to comparator output (default: GPIO5)
+- `WAKE_CIRCUIT_DEBUG`: Set to 1 for LED feedback without sleep (for adjusting trim pot), 0 for normal operation (default: 0)
+
 ## Home Assistant Configuration
 
 Add configurations for each trap to your Home Assistant configuration. Here's the complete setup for both existing traps:
@@ -173,7 +211,9 @@ mqtt:
       payload_on: "triggered"
       payload_off: "ready"
       device_class: occupancy
-      expire_after: 129600  # 36 hours in seconds
+      availability_topic: "home/mousetrap/backdoor/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
 
     - name: "Back Door Mouse Trap Battery"
       unique_id: "backdoor_mousetrap_battery"
@@ -181,7 +221,9 @@ mqtt:
       payload_on: "low"
       payload_off: "ok"
       device_class: problem
-      expire_after: 129600  # 36 hours in seconds
+      availability_topic: "home/mousetrap/backdoor/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
 
     # Garage Near Trap
     - name: "Garage Near Mouse Trap"
@@ -190,7 +232,9 @@ mqtt:
       payload_on: "triggered"
       payload_off: "ready"
       device_class: occupancy
-      expire_after: 129600  # 36 hours in seconds
+      availability_topic: "home/mousetrap/garage_near/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
 
     - name: "Garage Near Mouse Trap Battery"
       unique_id: "garage_near_mousetrap_battery"
@@ -198,7 +242,9 @@ mqtt:
       payload_on: "low"
       payload_off: "ok"
       device_class: problem
-      expire_after: 129600  # 36 hours in seconds
+      availability_topic: "home/mousetrap/garage_near/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
 
 # Template for additional traps (copy and modify for each new trap):
     # - name: "New Location Mouse Trap"
@@ -207,7 +253,9 @@ mqtt:
     #   payload_on: "triggered"
     #   payload_off: "ready"
     #   device_class: occupancy
-    #   expire_after: 129600  # 36 hours in seconds
+    #   availability_topic: "home/mousetrap/new_location/availability"
+    #   payload_available: "online"
+    #   payload_not_available: "offline"
     #
     # - name: "New Location Mouse Trap Battery"
     #   unique_id: "new_location_mousetrap_battery"
@@ -215,12 +263,20 @@ mqtt:
     #   payload_on: "low"
     #   payload_off: "ok"
     #   device_class: problem
-    #   expire_after: 129600  # 36 hours in seconds
+    #   availability_topic: "home/mousetrap/new_location/availability"
+    #   payload_available: "online"
+    #   payload_not_available: "offline"
 ```
 
-The `expire_after` setting ensures that sensors will automatically become `unavailable` if no message is received within 36 hours. This provides built-in monitoring of device health, accounting for the 24-hour heartbeat with a 12-hour buffer.
+The MQTT will message feature ensures that sensors will automatically become `unavailable` if the device disconnects unexpectedly. This provides more accurate and immediate monitoring of device health compared to the previous `expire_after` approach.
 
-You can create automations to monitor device health using the unavailable state:
+Benefits of using MQTT will messages:
+- Immediate notification when a device goes offline (no need to wait for a timeout)
+- More accurate representation of device state
+- Retained messages ensure the availability state persists even after Home Assistant restarts
+- Reduces the "flapping" between unavailable and clear states when Home Assistant restarts
+
+You can still create automations to monitor device health using the unavailable state:
 
 ```yaml
 automation:
@@ -249,14 +305,39 @@ These automations will notify you if any trap becomes unavailable, which happens
 
 ## Operation
 
+### Standard Operation (USE_WAKE_CIRCUIT=0)
 1. The device wakes up every 30 minutes (configurable)
 2. Performs burst sampling for 12 seconds to detect LED states
 3. If any state has changed (trap triggered or battery low) or the configured heartbeat interval has elapsed:
     - Connects to WiFi
     - Connects to MQTT broker
+    - Publishes "online" to the availability topic
     - Publishes the current state(s)
     - Resets the cycle counter
 4. Goes back to deep sleep to conserve power
+
+### Wake Circuit Operation (USE_WAKE_CIRCUIT=1)
+1. The device configures two wake-up sources:
+   - GPIO5 (connected to comparator output) - wakes immediately when trap is triggered
+   - Timer - wakes every 30 minutes for battery check and heartbeat
+2. When woken by GPIO5:
+   - Immediately connects to WiFi/MQTT
+   - Reports trap as triggered
+   - Goes back to sleep
+3. When woken by timer:
+   - Samples only the battery sensor
+   - Connects to WiFi/MQTT if battery state changed or heartbeat interval reached
+   - Goes back to sleep
+
+### Wake Circuit Debug Mode (WAKE_CIRCUIT_DEBUG=1)
+When enabled, the device:
+1. Continuously monitors the wake pin (GPIO5)
+2. Shows the RGB LED as green when the pin is HIGH (would trigger wake-up)
+3. Turns the LED off when the pin is LOW
+4. Does not enter sleep mode
+5. Allows for real-time adjustment of the trim pot to set the desired light threshold
+
+If the device disconnects unexpectedly, the MQTT broker will automatically publish the configured will message ("offline") to the availability topic, allowing Home Assistant to immediately mark the device as unavailable.
 
 ## Power Consumption
 
@@ -296,6 +377,12 @@ The dual sleep mode strategy maximizes power efficiency:
     - Blue: No sensors triggered
   - LED only activates in diagnostic mode to conserve power during normal operation
   - Diagnostic mode can only be entered during initial power-up, not during wake from sleep cycles
+- For wake circuit troubleshooting:
+  - Set `WAKE_CIRCUIT_DEBUG` to 1 to enter debug mode
+  - Adjust the trim potentiometer until the LED turns green when the trap is triggered
+  - Once calibrated, set `WAKE_CIRCUIT_DEBUG` back to 0 for normal operation
+  - If the wake circuit is not working, check connections and verify the comparator is receiving power
+  - Make sure the LDR is properly positioned to detect the trap's LED
 - If you encounter build issues with macros in common.h, ensure there are no trailing backslashes at the end of lines
 
 ## License

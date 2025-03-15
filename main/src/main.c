@@ -115,6 +115,33 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
     }
 }
 
+static void check_wakeup_cause(void) {
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    
+    if (DEBUG_LOGS) {
+        printf("[%s] Wake up reason: ", TAG);
+        switch(wakeup_reason) {
+            case ESP_SLEEP_WAKEUP_EXT0:
+                printf("external signal using RTC_IO (wake circuit)\n");
+                break;
+            case ESP_SLEEP_WAKEUP_TIMER:
+                printf("timer\n");
+                break;
+            case ESP_SLEEP_WAKEUP_UNDEFINED:
+                printf("undefined (first boot)\n");
+                break;
+            default:
+                printf("other reason (%d)\n", wakeup_reason);
+                break;
+        }
+    }
+    
+    // If woken up by wake circuit, we know the trap is triggered
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
+        last_trap_state = false; // Force state change to trigger publish
+    }
+}
+
 void app_main(void)
 {
     // Initialize ADC
@@ -138,22 +165,87 @@ void app_main(void)
             diagnostic_mode_run(adc1_handle);
             esp_restart(); // If we ever exit diagnostic mode, restart the device
         }
+    } else {
+        // Initialize LED controller for wake circuit debug mode
+        #if USE_WAKE_CIRCUIT && WAKE_CIRCUIT_DEBUG
+        ESP_ERROR_CHECK(led_controller_init());
+        #endif
     }
 
-    // Main operation loop
-    while (1) {
-        sensor_data_t sensor1_data, sensor2_data;
-        
-        // Perform burst sampling
-        sensor_manager_burst_sample(adc1_handle, &sensor1_data, &sensor2_data);
-        
-        // Publish results if needed
-        publish_sensor_states(&sensor1_data, &sensor2_data);
-        
-        // Go to deep sleep
-        if (DEBUG_LOGS) {
-            printf("[%s] Going to sleep for %d seconds\n", TAG, SLEEP_TIME_SECONDS);
+    // Check wake-up cause
+    check_wakeup_cause();
+
+    #if USE_WAKE_CIRCUIT
+        // Configure wake pin as input
+        gpio_config_t io_conf = {
+            .pin_bit_mask = (1ULL << WAKE_PIN),
+            .mode = GPIO_MODE_INPUT,
+            .pull_up_en = GPIO_PULLDOWN_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_ENABLE,
+            .intr_type = GPIO_INTR_DISABLE,
+        };
+        gpio_config(&io_conf);
+
+        #if WAKE_CIRCUIT_DEBUG
+            // Debug mode - don't sleep, just show LED based on pin state
+            if (DEBUG_LOGS) {
+                printf("[%s] Wake circuit debug mode active. Adjust trim pot until LED shows green when trap triggered.\n", TAG);
+            }
+            
+            while(1) {
+                bool pin_state = gpio_get_level(WAKE_PIN);
+                if (pin_state) {
+                    led_controller_set_color(LED_COLOR_GREEN);  // Would wake
+                    if (DEBUG_LOGS) {
+                        printf("[%s] Wake pin HIGH - would trigger wake-up\n", TAG);
+                        vTaskDelay(pdMS_TO_TICKS(1000));  // Print once per second
+                    }
+                } else {
+                    led_controller_set_color(LED_COLOR_OFF);    // Would sleep
+                }
+                vTaskDelay(pdMS_TO_TICKS(100));  // Update every 100ms
+            }
+        #else
+            // Main operation loop with wake circuit
+            sensor_data_t sensor1_data, sensor2_data;
+            
+            // Only sample battery state, trap state comes from wake pin
+            sensor_manager_sample_battery(adc1_handle, &sensor2_data);
+            
+            // Set sensor1 data based on wake pin
+            sensor1_data.max_value = gpio_get_level(WAKE_PIN) ? TRAP_THRESHOLD + 100 : 0;
+            
+            // Publish results if needed
+            publish_sensor_states(&sensor1_data, &sensor2_data);
+            
+            // Configure wake-up sources
+            esp_sleep_enable_ext0_wakeup(WAKE_PIN, 1);  // Wake when pin is HIGH
+            esp_sleep_enable_timer_wakeup(SLEEP_TIME_SECONDS * 1000000ULL);  // Also wake on timer
+            
+            // Go to deep sleep
+            if (DEBUG_LOGS) {
+                printf("[%s] Going to sleep for %d seconds (or until wake pin triggers)\n",
+                       TAG, SLEEP_TIME_SECONDS);
+            }
+            esp_deep_sleep_start();
+        #endif
+    #else
+        // Original behavior without wake circuit
+        // Main operation loop
+        while (1) {
+            sensor_data_t sensor1_data, sensor2_data;
+            
+            // Perform burst sampling
+            sensor_manager_burst_sample(adc1_handle, &sensor1_data, &sensor2_data);
+            
+            // Publish results if needed
+            publish_sensor_states(&sensor1_data, &sensor2_data);
+            
+            // Go to deep sleep
+            if (DEBUG_LOGS) {
+                printf("[%s] Going to sleep for %d seconds\n", TAG, SLEEP_TIME_SECONDS);
+            }
+            esp_deep_sleep(SLEEP_TIME_SECONDS * 1000000);
         }
-        esp_deep_sleep(SLEEP_TIME_SECONDS * 1000000);
-    }
+    #endif
 }

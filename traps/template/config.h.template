@@ -15,6 +15,7 @@
 // MQTT topics - EDIT THESE
 #define MQTT_TOPIC_CAUGHT "home/mousetrap/new_location/state"     // Replace new_location with TRAP_ID
 #define MQTT_TOPIC_BATTERY "home/mousetrap/new_location/battery"  // Replace new_location with TRAP_ID
+#define MQTT_TOPIC_AVAILABILITY "home/mousetrap/new_location/availability"  // Replace new_location with TRAP_ID
 
 // Threshold configuration - ADJUST BASED ON LOCATION
 #define TRAP_THRESHOLD 50    // ADC value above this means trap triggered
@@ -51,6 +52,11 @@
 #define SAMPLE_INTERVAL_MS 20           // Sample every 20ms during burst
 #define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes
 //#define HEARTBEAT_INTERVAL_HOURS 24     // How often to force publish state updates (default to 24 hours if not set)
+
+// Wake circuit configuration
+#define USE_WAKE_CIRCUIT 0              // Set to 1 if using external comparator wake circuit
+#define WAKE_PIN GPIO_NUM_5             // GPIO pin connected to comparator output
+#define WAKE_CIRCUIT_DEBUG 0            // Set to 1 for LED feedback without sleep (for adjusting trim pot)
 
 
 #endif // CONFIG_H

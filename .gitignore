@@ -8,3 +8,5 @@ secrets.h
 config.h
 traps/*/config.h
 *.lock
+kicad/WakeCircuit/WakeCircuit-backups/*
+~*.lck

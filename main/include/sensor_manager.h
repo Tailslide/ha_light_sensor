@@ -13,9 +13,13 @@ typedef struct {
 esp_err_t sensor_manager_init(adc_oneshot_unit_handle_t *adc1_handle);
 
 // Perform burst sampling of sensors
-void sensor_manager_burst_sample(adc_oneshot_unit_handle_t adc1_handle, 
-                               sensor_data_t *sensor1, 
+void sensor_manager_burst_sample(adc_oneshot_unit_handle_t adc1_handle,
+                               sensor_data_t *sensor1,
                                sensor_data_t *sensor2);
+
+// Sample only the battery sensor (for wake circuit mode)
+void sensor_manager_sample_battery(adc_oneshot_unit_handle_t adc1_handle,
+                                 sensor_data_t *sensor2);
 
 // Check if trap is triggered based on sensor data
 bool sensor_manager_is_trap_triggered(const sensor_data_t *sensor_data);

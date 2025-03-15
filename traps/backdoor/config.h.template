@@ -15,6 +15,7 @@
 // MQTT topics - use specific states for easy automation
 #define MQTT_TOPIC_CAUGHT "home/mousetrap/backdoor/state"     // sends "triggered" or "ready"
 #define MQTT_TOPIC_BATTERY "home/mousetrap/backdoor/battery"  // sends "low" or "ok"
+#define MQTT_TOPIC_AVAILABILITY "home/mousetrap/backdoor/availability"  // sends "online" or "offline"
 
 // M5Stamp C3 Pin Configuration
 #define BUTTON_PIN GPIO_NUM_9           // Built-in button

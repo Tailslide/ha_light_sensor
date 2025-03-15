@@ -9,7 +9,7 @@ esp_mqtt_client_handle_t mqtt_client = NULL;
 static bool mqtt_connected = false;
 
 void mqtt_manager_event_handler(void *handler_args, esp_event_base_t base,
-                              int32_t event_id, void *event_data)
+                               int32_t event_id, void *event_data)
 {
     esp_mqtt_event_handle_t event = event_data;
     bool *connection_established = (bool *)handler_args;
@@ -21,6 +21,8 @@ void mqtt_manager_event_handler(void *handler_args, esp_event_base_t base,
             if (connection_established != NULL) {
                 *connection_established = true;
             }
+            // Publish online status when connected
+            esp_mqtt_client_publish(event->client, MQTT_TOPIC_AVAILABILITY, "online", 0, 1, 1);
             break;
         case MQTT_EVENT_DISCONNECTED:
             if (DEBUG_LOGS) printf("[%s] MQTT Disconnected\n", TAG);
@@ -46,7 +48,11 @@ bool mqtt_manager_init(void)
         .broker.address.uri = "mqtt://" MQTT_BROKER,
         .broker.address.port = MQTT_PORT,
         .credentials.username = MQTT_USERNAME,
-        .credentials.authentication.password = MQTT_PASSWORD
+        .credentials.authentication.password = MQTT_PASSWORD,
+        .session.last_will.topic = MQTT_TOPIC_AVAILABILITY,
+        .session.last_will.msg = "offline",
+        .session.last_will.qos = 1,
+        .session.last_will.retain = 1
     };
 
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);

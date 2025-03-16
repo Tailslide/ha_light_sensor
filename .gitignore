@@ -10,3 +10,4 @@ traps/*/config.h
 *.lock
 kicad/WakeCircuit/WakeCircuit-backups/*
 ~*.lck
+sdkconfig.orig

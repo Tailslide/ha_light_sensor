@@ -24,7 +24,7 @@
 // =============================================
 
 // Set to 1 to enable debug logs, 0 to disable
-#define DEBUG_LOGS 1
+#define DEBUG_LOGS 0
 
 // MQTT configuration
 #define MQTT_PORT (1883)
@@ -48,11 +48,11 @@
 // Timing configuration
 #define BURST_DURATION_MS 12000         // Sample for 12 seconds
 #define SAMPLE_INTERVAL_MS 20           // Sample every 20ms during burst
-#define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes
+#define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes if no wake circuit
 //#define HEARTBEAT_INTERVAL_HOURS 24     // How often to force publish state updates (default to 24 hours if not set)
 
 // Wake circuit configuration
-#define USE_WAKE_CIRCUIT 0              // Set to 1 if using external comparator wake circuit
+#define USE_WAKE_CIRCUIT 1              // Set to 1 if using external comparator wake circuit
 #define WAKE_PIN GPIO_NUM_5             // GPIO pin connected to comparator output
 
 #endif // CONFIG_H

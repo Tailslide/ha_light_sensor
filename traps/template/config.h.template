@@ -50,7 +50,7 @@
 // Timing configuration
 #define BURST_DURATION_MS 12000         // Sample for 12 seconds
 #define SAMPLE_INTERVAL_MS 20           // Sample every 20ms during burst
-#define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes
+#define SLEEP_TIME_SECONDS (30 * 60)    // Sleep for 30 minutes if no wake circuit
 //#define HEARTBEAT_INTERVAL_HOURS 24     // How often to force publish state updates (default to 24 hours if not set)
 
 // Wake circuit configuration

@@ -144,6 +144,54 @@ static void check_wakeup_cause(void) {
 
 void app_main(void)
 {
+    // Early check for WAKE_CIRCUIT_DEBUG mode to avoid unnecessary initialization
+    printf("[%s] USE_WAKE_CIRCUIT=%d, WAKE_CIRCUIT_DEBUG=%d\n", TAG, USE_WAKE_CIRCUIT, WAKE_CIRCUIT_DEBUG);
+    
+    // Special case: WAKE_CIRCUIT_DEBUG mode
+    #if USE_WAKE_CIRCUIT && WAKE_CIRCUIT_DEBUG
+    printf("[%s] Entering WAKE_CIRCUIT_DEBUG mode\n", TAG);
+    // Initialize ADC (needed for all modes)
+    adc_oneshot_unit_handle_t adc1_handle;
+    ESP_ERROR_CHECK(sensor_manager_init(&adc1_handle));
+    
+    // Initialize LED controller for debug mode
+    ESP_ERROR_CHECK(led_controller_init());
+    
+    // Configure wake pin as input
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << WAKE_PIN),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLDOWN_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&io_conf);
+    
+    // Debug mode - don't sleep, just show LED based on pin state
+    if (DEBUG_LOGS) {
+        printf("[%s] Wake circuit debug mode active. Adjust trim pot until LED shows green when trap triggered.\n", TAG);
+    }
+    
+    while(1) {
+        bool pin_state = gpio_get_level(WAKE_PIN);
+        if (pin_state) {
+            led_controller_set_color(LED_COLOR_GREEN);  // Would wake
+            if (DEBUG_LOGS) {
+                printf("[%s] Wake pin HIGH - would trigger wake-up\n", TAG);
+                vTaskDelay(pdMS_TO_TICKS(1000));  // Print once per second
+            }
+        } else {
+            led_controller_set_color(LED_COLOR_OFF);    // Would sleep
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));  // Update every 100ms
+    }
+    
+    // The code will never reach here in WAKE_CIRCUIT_DEBUG mode
+    return;
+    
+    // Normal operation mode
+    #else
+    
     // Initialize ADC
     adc_oneshot_unit_handle_t adc1_handle;
     ESP_ERROR_CHECK(sensor_manager_init(&adc1_handle));
@@ -166,8 +214,8 @@ void app_main(void)
             esp_restart(); // If we ever exit diagnostic mode, restart the device
         }
     } else {
-        // Initialize LED controller for wake circuit debug mode
-        #if USE_WAKE_CIRCUIT && WAKE_CIRCUIT_DEBUG
+        // Initialize LED controller for wake circuit
+        #if USE_WAKE_CIRCUIT
         ESP_ERROR_CHECK(led_controller_init());
         #endif
     }
@@ -175,60 +223,32 @@ void app_main(void)
     // Check wake-up cause
     check_wakeup_cause();
 
+    // Choose operation mode based on wake circuit configuration
     #if USE_WAKE_CIRCUIT
-        // Configure wake pin as input
-        gpio_config_t io_conf = {
-            .pin_bit_mask = (1ULL << WAKE_PIN),
-            .mode = GPIO_MODE_INPUT,
-            .pull_up_en = GPIO_PULLDOWN_DISABLE,
-            .pull_down_en = GPIO_PULLDOWN_ENABLE,
-            .intr_type = GPIO_INTR_DISABLE,
-        };
-        gpio_config(&io_conf);
-
-        #if WAKE_CIRCUIT_DEBUG
-            // Debug mode - don't sleep, just show LED based on pin state
-            if (DEBUG_LOGS) {
-                printf("[%s] Wake circuit debug mode active. Adjust trim pot until LED shows green when trap triggered.\n", TAG);
-            }
-            
-            while(1) {
-                bool pin_state = gpio_get_level(WAKE_PIN);
-                if (pin_state) {
-                    led_controller_set_color(LED_COLOR_GREEN);  // Would wake
-                    if (DEBUG_LOGS) {
-                        printf("[%s] Wake pin HIGH - would trigger wake-up\n", TAG);
-                        vTaskDelay(pdMS_TO_TICKS(1000));  // Print once per second
-                    }
-                } else {
-                    led_controller_set_color(LED_COLOR_OFF);    // Would sleep
-                }
-                vTaskDelay(pdMS_TO_TICKS(100));  // Update every 100ms
-            }
-        #else
-            // Main operation loop with wake circuit
-            sensor_data_t sensor1_data, sensor2_data;
-            
-            // Only sample battery state, trap state comes from wake pin
-            sensor_manager_sample_battery(adc1_handle, &sensor2_data);
-            
-            // Set sensor1 data based on wake pin
-            sensor1_data.max_value = gpio_get_level(WAKE_PIN) ? TRAP_THRESHOLD + 100 : 0;
-            
-            // Publish results if needed
-            publish_sensor_states(&sensor1_data, &sensor2_data);
-            
-            // Configure wake-up sources
-            esp_sleep_enable_ext0_wakeup(WAKE_PIN, 1);  // Wake when pin is HIGH
-            esp_sleep_enable_timer_wakeup(SLEEP_TIME_SECONDS * 1000000ULL);  // Also wake on timer
-            
-            // Go to deep sleep
-            if (DEBUG_LOGS) {
-                printf("[%s] Going to sleep for %d seconds (or until wake pin triggers)\n",
-                       TAG, SLEEP_TIME_SECONDS);
-            }
-            esp_deep_sleep_start();
-        #endif
+        // Main operation loop with wake circuit
+        sensor_data_t sensor1_data, sensor2_data;
+        
+        // Only sample battery state, trap state comes from wake pin
+        sensor_manager_sample_battery(adc1_handle, &sensor2_data);
+        
+        // Set sensor1 data based on wake pin
+        sensor1_data.max_value = gpio_get_level(WAKE_PIN) ? TRAP_THRESHOLD + 100 : 0;
+        
+        // Publish results if needed
+        publish_sensor_states(&sensor1_data, &sensor2_data);
+        
+        // Configure wake-up sources
+        // ESP32-C3 doesn't support ext0 wakeup, use gpio wakeup instead
+        gpio_wakeup_enable(WAKE_PIN, GPIO_INTR_HIGH_LEVEL);  // Wake when pin is HIGH
+        esp_sleep_enable_gpio_wakeup();
+        esp_sleep_enable_timer_wakeup(SLEEP_TIME_SECONDS * 1000000ULL);  // Also wake on timer
+        
+        // Go to deep sleep
+        if (DEBUG_LOGS) {
+            printf("[%s] Going to sleep for %d seconds (or until wake pin triggers)\n",
+                   TAG, SLEEP_TIME_SECONDS);
+        }
+        esp_deep_sleep_start();
     #else
         // Original behavior without wake circuit
         // Main operation loop
@@ -248,4 +268,5 @@ void app_main(void)
             esp_deep_sleep(SLEEP_TIME_SECONDS * 1000000);
         }
     #endif
+    #endif // End of normal operation mode
 }

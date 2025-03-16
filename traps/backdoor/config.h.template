@@ -43,4 +43,9 @@
 #define TRAP_THRESHOLD 50    // ADC value above this means trap triggered
 #define BATTERY_THRESHOLD 200 // ADC value above this means low battery
 
+// Wake circuit configuration
+#define USE_WAKE_CIRCUIT 0              // Set to 1 if using external comparator wake circuit
+#define WAKE_PIN GPIO_NUM_5             // GPIO pin connected to comparator output
+#define WAKE_CIRCUIT_DEBUG 0            // Set to 1 for LED feedback without sleep (for adjusting trim pot)
+
 #endif // CONFIG_H

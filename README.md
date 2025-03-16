@@ -383,6 +383,17 @@ The dual sleep mode strategy maximizes power efficiency:
   - Once calibrated, set `WAKE_CIRCUIT_DEBUG` back to 0 for normal operation
   - If the wake circuit is not working, check connections and verify the comparator is receiving power
   - Make sure the LDR is properly positioned to detect the trap's LED
+  - When WAKE_CIRCUIT_DEBUG=1, the device will:
+    - Only run the debug loop showing LED status based on wake pin
+    - Not attempt to connect to WiFi or publish MQTT messages
+    - Not enter sleep mode
+    - Continuously monitor the wake pin state
+- If WiFi connection fails during heartbeat:
+  - The device will not reset its heartbeat counter and will try again on the next wake cycle
+  - It will continue trying on each wake cycle until it successfully connects
+  - No "offline" status is published until a successful connection is made and then lost
+  - Home Assistant will continue to show the last known state until a successful update
+  - WiFi issues won't affect the device's ability to monitor the trap - all states are preserved
 - If you encounter build issues with macros in common.h, ensure there are no trailing backslashes at the end of lines
 
 ## License

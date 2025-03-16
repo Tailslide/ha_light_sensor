@@ -15,5 +15,8 @@ void led_controller_set_diagnostic_state(bool trap_triggered, bool battery_low);
 // Set LED state (on/off) - used for blinking during diagnostic entry
 void led_controller_set_state(bool on);
 
+// Set LED color using predefined color constants (LED_COLOR_*)
+void led_controller_set_color(uint32_t color);
+
 // Blink LED for specified number of times with given interval
 void led_controller_blink(int times, int interval_ms);

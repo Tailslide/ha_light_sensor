@@ -2,16 +2,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Set to 1 to enable debug logs, 0 to disable
-#define DEBUG_LOGS 1
-
-// MQTT configuration
-#define MQTT_PORT (1883)
-
-// Threshold configuration - starting with same values, adjust based on location
-#define TRAP_THRESHOLD 50    // ADC value above this means trap triggered
-#define BATTERY_THRESHOLD 200 // ADC value above this means low battery
-
 // =============================================
 // CUSTOMIZE THESE SECTIONS FOR YOUR NEW TRAP
 // =============================================
@@ -24,6 +14,20 @@
 #define MQTT_TOPIC_CAUGHT "home/mousetrap/garage_near/state"     // sends "triggered" or "ready"
 #define MQTT_TOPIC_BATTERY "home/mousetrap/garage_near/battery"  // sends "low" or "ok"
 #define MQTT_TOPIC_AVAILABILITY "home/mousetrap/garage_near/availability"  // sends "online" or "offline"
+
+// Threshold configuration - starting with same values, adjust based on location
+#define TRAP_THRESHOLD 50    // ADC value above this means trap triggered
+#define BATTERY_THRESHOLD 200 // ADC value above this means low battery
+
+// =============================================
+// STANDARD CONFIGURATION - USUALLY NO NEED TO MODIFY
+// =============================================
+
+// Set to 1 to enable debug logs, 0 to disable
+#define DEBUG_LOGS 1
+
+// MQTT configuration
+#define MQTT_PORT (1883)
 
 // M5Stamp C3 Pin Configuration
 #define BUTTON_PIN GPIO_NUM_9           // Built-in button
@@ -50,6 +54,6 @@
 // Wake circuit configuration
 #define USE_WAKE_CIRCUIT 0              // Set to 1 if using external comparator wake circuit
 #define WAKE_PIN GPIO_NUM_5             // GPIO pin connected to comparator output
-#define WAKE_CIRCUIT_DEBUG 1           // Set to 1 for LED feedback without sleep (for adjusting trim pot)
+#define WAKE_CIRCUIT_DEBUG 0            // Set to 1 for LED feedback without sleep (for adjusting trim pot)
 
 #endif // CONFIG_H

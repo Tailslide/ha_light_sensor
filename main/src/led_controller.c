@@ -51,7 +51,7 @@ void led_controller_set_diagnostic_state(bool trap_triggered, bool battery_low)
     led_strip_refresh(led_strip);
     
     if (DEBUG_LOGS) {
-        printf("[%s] LED set to %s\n", TAG, 
+        printf("[%s] LED set to %s\n", TAG,
             trap_triggered && battery_low ? "YELLOW" :
             trap_triggered ? "GREEN" :
             battery_low ? "RED" : "BLUE");
@@ -69,6 +69,33 @@ void led_controller_set_state(bool on)
     }
     
     if (DEBUG_LOGS) printf("[%s] LED set to %s\n", TAG, on ? "ON" : "OFF");
+}
+
+// Set LED color using predefined color constants (LED_COLOR_*)
+void led_controller_set_color(uint32_t color)
+{
+    // Extract RGB components from the 24-bit color value
+    uint8_t r = (color >> 16) & 0xFF;
+    uint8_t g = (color >> 8) & 0xFF;
+    uint8_t b = color & 0xFF;
+    
+    if (color == LED_COLOR_OFF) {
+        led_strip_clear(led_strip);
+        if (DEBUG_LOGS) printf("[%s] LED set to OFF\n", TAG);
+    } else {
+        led_strip_set_pixel(led_strip, 0, r, g, b);
+        led_strip_refresh(led_strip);
+        
+        if (DEBUG_LOGS) {
+            const char* color_name = "CUSTOM";
+            if (color == LED_COLOR_RED) color_name = "RED";
+            else if (color == LED_COLOR_GREEN) color_name = "GREEN";
+            else if (color == LED_COLOR_BLUE) color_name = "BLUE";
+            else if (color == LED_COLOR_YELLOW) color_name = "YELLOW";
+            
+            printf("[%s] LED set to %s (R:%d,G:%d,B:%d)\n", TAG, color_name, r, g, b);
+        }
+    }
 }
 
 void led_controller_blink(int times, int interval_ms)

@@ -158,6 +158,7 @@ static void check_wakeup_cause(void) {
                 printf("[%s] Wakeup from GPIO %d\n", TAG, pin);
                 if (pin == WAKE_PIN) {
                     woken_by_wake_circuit = true;
+                    printf("[%s] Setting woken_by_wake_circuit to true\n", TAG);
                 }
             }
             break;
@@ -228,6 +229,10 @@ void app_main(void)
         // Set sensor1 data based on wake pin or wake circuit trigger
         int wake_pin_level = gpio_get_level(WAKE_PIN);
         
+        // Debug the wake circuit status
+        printf("[%s] Wake pin level: %d, woken by wake circuit: %d\n",
+               TAG, wake_pin_level, woken_by_wake_circuit);
+               
         // Consider trap triggered if either:
         // 1. Current wake pin level is HIGH, or
         // 2. Device was woken by the wake circuit (even if pin is now LOW)
@@ -237,8 +242,7 @@ void app_main(void)
             sensor1_data.max_value = 0;
         }
         
-        printf("[%s] Wake pin level: %d, woken by wake circuit: %d, setting sensor1 max_value to %d\n",
-               TAG, wake_pin_level, woken_by_wake_circuit, sensor1_data.max_value);
+        printf("[%s] Setting sensor1 max_value to %d\n", TAG, sensor1_data.max_value);
         
         // Publish results if needed
         publish_sensor_states(&sensor1_data, &sensor2_data);

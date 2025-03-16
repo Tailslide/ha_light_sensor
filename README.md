@@ -107,6 +107,36 @@ The project now supports multiple mouse traps with individual configurations. Ea
 - `garage_near` - Garage near entrance trap
 - Additional traps can be added by copying the `template` directory
 
+### Power Optimization Settings
+
+The project includes a `sdkconfig.defaults` file with optimized settings for power consumption:
+
+```
+# Power Management - Enable automatic power saving
+CONFIG_PM_ENABLE=y
+CONFIG_PM_DFS_INIT_AUTO=y
+CONFIG_PM_USE_RTC_TIMER_REF=y
+
+# CPU Frequency - Lower to 80MHz to save power
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_80=y
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ=80
+
+# Flash Power Down in Deep Sleep
+CONFIG_ESP_SLEEP_POWER_DOWN_FLASH=y
+
+# WiFi Power Saving
+CONFIG_ESP_WIFI_SLP_IRAM_OPT=y
+CONFIG_ESP_WIFI_SLP_DEFAULT_MIN_ACTIVE_TIME=100
+CONFIG_ESP_WIFI_SLP_DEFAULT_MAX_ACTIVE_TIME=5
+CONFIG_ESP_WIFI_STA_DISCONNECTED_PM_ENABLE=y
+
+# Minimize Logging
+CONFIG_LOG_DEFAULT_LEVEL_ERROR=y
+CONFIG_LOG_DEFAULT_LEVEL=1
+```
+
+These settings are automatically applied during the build process and significantly reduce power consumption.
+
 ### Setting Up a New Trap
 
 1. Clone this repository
@@ -355,6 +385,12 @@ The device is designed to be power efficient:
 - UART/Serial interface completely disabled after diagnostic mode check
 - Serial output only enabled during initial boot and diagnostic mode
 - GPIO pins for UART (TX/RX) reset to save power when not in use
+- Power optimization settings in sdkconfig.defaults:
+  - CPU frequency reduced to 80MHz
+  - Flash powered down during deep sleep
+  - WiFi power saving optimizations
+  - Compiler optimized for size
+  - Logging level minimized
 
 The dual sleep mode strategy maximizes power efficiency:
 1. Light sleep during burst sampling (20ms intervals)
@@ -385,6 +421,8 @@ The dual sleep mode strategy maximizes power efficiency:
     1. The current wake pin level is HIGH, or
     2. The device was woken by the wake circuit (even if the pin is now LOW)
   - This ensures that even momentary triggers will be properly detected and reported
+  - The 2025-03-16 update includes additional debugging to ensure the wake circuit flag is properly set and maintained throughout the wake-up process
+  - If you see inconsistent behavior with the wake circuit, update to the latest firmware version
 
 ### Power Optimization
 

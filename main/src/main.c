@@ -144,53 +144,10 @@ static void check_wakeup_cause(void) {
 
 void app_main(void)
 {
-    // Early check for WAKE_CIRCUIT_DEBUG mode to avoid unnecessary initialization
-    printf("[%s] USE_WAKE_CIRCUIT=%d, WAKE_CIRCUIT_DEBUG=%d\n", TAG, USE_WAKE_CIRCUIT, WAKE_CIRCUIT_DEBUG);
-    
-    // Special case: WAKE_CIRCUIT_DEBUG mode
-    #if USE_WAKE_CIRCUIT && WAKE_CIRCUIT_DEBUG
-    printf("[%s] Entering WAKE_CIRCUIT_DEBUG mode\n", TAG);
-    // Initialize ADC (needed for all modes)
-    adc_oneshot_unit_handle_t adc1_handle;
-    ESP_ERROR_CHECK(sensor_manager_init(&adc1_handle));
-    
-    // Initialize LED controller for debug mode
-    ESP_ERROR_CHECK(led_controller_init());
-    
-    // Configure wake pin as input
-    gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << WAKE_PIN),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLDOWN_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_ENABLE,
-        .intr_type = GPIO_INTR_DISABLE,
-    };
-    gpio_config(&io_conf);
-    
-    // Debug mode - don't sleep, just show LED based on pin state
-    if (DEBUG_LOGS) {
-        printf("[%s] Wake circuit debug mode active. Adjust trim pot until LED shows green when trap triggered.\n", TAG);
-    }
-    
-    while(1) {
-        bool pin_state = gpio_get_level(WAKE_PIN);
-        if (pin_state) {
-            led_controller_set_color(LED_COLOR_GREEN);  // Would wake
-            if (DEBUG_LOGS) {
-                printf("[%s] Wake pin HIGH - would trigger wake-up\n", TAG);
-                vTaskDelay(pdMS_TO_TICKS(1000));  // Print once per second
-            }
-        } else {
-            led_controller_set_color(LED_COLOR_OFF);    // Would sleep
-        }
-        vTaskDelay(pdMS_TO_TICKS(100));  // Update every 100ms
-    }
-    
-    // The code will never reach here in WAKE_CIRCUIT_DEBUG mode
-    return;
+    // Early check for wake circuit configuration
+    printf("[%s] USE_WAKE_CIRCUIT=%d\n", TAG, USE_WAKE_CIRCUIT);
     
     // Normal operation mode
-    #else
     
     // Initialize ADC
     adc_oneshot_unit_handle_t adc1_handle;
@@ -267,6 +224,5 @@ void app_main(void)
             }
             esp_deep_sleep(SLEEP_TIME_SECONDS * 1000000);
         }
-    #endif
-    #endif // End of normal operation mode
+    #endif // End of wake circuit configuration
 }

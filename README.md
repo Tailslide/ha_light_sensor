@@ -195,7 +195,7 @@ The project now supports multiple mouse traps with individual configurations. Ea
 ### Wake Circuit Configuration
 - `USE_WAKE_CIRCUIT`: Set to 1 to enable external comparator wake circuit, 0 to use standard ADC sampling (default: 0)
 - `WAKE_PIN`: GPIO pin connected to comparator output (default: GPIO5)
-- `WAKE_CIRCUIT_DEBUG`: Set to 1 for LED feedback without sleep (for adjusting trim pot), 0 for normal operation (default: 0)
+- Note: To test and calibrate the wake circuit, use diagnostic mode by holding the button during boot
 
 ## Home Assistant Configuration
 
@@ -329,13 +329,17 @@ These automations will notify you if any trap becomes unavailable, which happens
    - Connects to WiFi/MQTT if battery state changed or heartbeat interval reached
    - Goes back to sleep
 
-### Wake Circuit Debug Mode (WAKE_CIRCUIT_DEBUG=1)
-When enabled, the device:
-1. Continuously monitors the wake pin (GPIO5)
-2. Shows the RGB LED as green when the pin is HIGH (would trigger wake-up)
-3. Turns the LED off when the pin is LOW
-4. Does not enter sleep mode
-5. Allows for real-time adjustment of the trim pot to set the desired light threshold
+### Diagnostic Mode with Wake Circuit Support
+When the device is started by holding down the button on boot, it enters diagnostic mode:
+1. If wake circuit is enabled (USE_WAKE_CIRCUIT=1):
+   - Continuously monitors the wake pin (GPIO5) for trap detection
+   - Shows the RGB LED based on both wake pin and battery sensor states
+   - Displays both wake pin state and LDR readings in the console
+2. If wake circuit is not enabled:
+   - Uses the standard LDR sensors for both trap and battery detection
+   - Shows the RGB LED based on both sensor states
+
+This mode allows for real-time adjustment of the trim pot to set the desired light threshold when using the wake circuit.
 
 If the device disconnects unexpectedly, the MQTT broker will automatically publish the configured will message ("offline") to the availability topic, allowing Home Assistant to immediately mark the device as unavailable.
 
@@ -378,13 +382,14 @@ The dual sleep mode strategy maximizes power efficiency:
   - LED only activates in diagnostic mode to conserve power during normal operation
   - Diagnostic mode can only be entered during initial power-up, not during wake from sleep cycles
 - For wake circuit troubleshooting:
-  - Set `WAKE_CIRCUIT_DEBUG` to 1 to enter debug mode
+  - Enter diagnostic mode by holding the button during boot
+  - The diagnostic mode will automatically detect if wake circuit is enabled
   - Adjust the trim potentiometer until the LED turns green when the trap is triggered
-  - Once calibrated, set `WAKE_CIRCUIT_DEBUG` back to 0 for normal operation
+  - The console will display both wake pin state and LDR readings
   - If the wake circuit is not working, check connections and verify the comparator is receiving power
   - Make sure the LDR is properly positioned to detect the trap's LED
-  - When WAKE_CIRCUIT_DEBUG=1, the device will:
-    - Only run the debug loop showing LED status based on wake pin
+  - In diagnostic mode with wake circuit enabled, the device will:
+    - Show LED status based on both wake pin and battery sensor states
     - Not attempt to connect to WiFi or publish MQTT messages
     - Not enter sleep mode
     - Continuously monitor the wake pin state

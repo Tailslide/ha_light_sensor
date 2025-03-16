@@ -74,20 +74,53 @@ void diagnostic_mode_run(adc_oneshot_unit_handle_t adc1_handle)
     printf("Trap threshold: %d\n", TRAP_THRESHOLD);
     printf("Battery threshold: %d\n", BATTERY_THRESHOLD);
     
+    #if USE_WAKE_CIRCUIT
+    // Configure wake pin as input if using wake circuit
+    printf("Wake circuit enabled - using WAKE_PIN for trap detection\n");
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << WAKE_PIN),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLDOWN_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&io_conf);
+    #endif
+    
     while (1) {
         int reading1, reading2;
-        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LDR1_ADC_CHANNEL, &reading1));
-        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LDR2_ADC_CHANNEL, &reading2));
+        bool trap_triggered;
         
-        bool trap_triggered = (reading1 > TRAP_THRESHOLD);
+        #if USE_WAKE_CIRCUIT
+        // If wake circuit is enabled, use WAKE_PIN for trap detection
+        bool pin_state = gpio_get_level(WAKE_PIN);
+        trap_triggered = pin_state;
+        
+        // Still read LDR1 for informational purposes
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LDR1_ADC_CHANNEL, &reading1));
+        #else
+        // Use LDR1 for trap detection if no wake circuit
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LDR1_ADC_CHANNEL, &reading1));
+        trap_triggered = (reading1 > TRAP_THRESHOLD);
+        #endif
+        
+        // Always use LDR2 for battery state
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, LDR2_ADC_CHANNEL, &reading2));
         bool battery_low = (reading2 > BATTERY_THRESHOLD);
         
         // Update LED with color-coded states
         led_controller_set_diagnostic_state(trap_triggered, battery_low);
         
+        #if USE_WAKE_CIRCUIT
+        printf("Wake pin: %s, LDR1: %d, Battery sensor: %d (%s)\n",
+               trap_triggered ? "HIGH (TRIGGERED)" : "LOW (ready)",
+               reading1,
+               reading2, battery_low ? "LOW" : "ok");
+        #else
         printf("Trap sensor: %d (%s), Battery sensor: %d (%s)\n",
                reading1, trap_triggered ? "TRIGGERED" : "ready",
                reading2, battery_low ? "LOW" : "ok");
+        #endif
         
         vTaskDelay(pdMS_TO_TICKS(500)); // Update every 500ms
     }

@@ -385,6 +385,14 @@ The dual sleep mode strategy maximizes power efficiency:
     1. The current wake pin level is HIGH, or
     2. The device was woken by the wake circuit (even if the pin is now LOW)
   - This ensures that even momentary triggers will be properly detected and reported
+
+### Power Optimization
+
+- When using the wake circuit (USE_WAKE_CIRCUIT=1):
+  - The device will only wake up when the trap is triggered or for the heartbeat interval
+  - Sleep time is set to the HEARTBEAT_INTERVAL_HOURS (default 24 hours) instead of the 30-minute polling interval
+  - This significantly reduces power consumption since the device doesn't need to wake up every 30 minutes
+  - The wake circuit will immediately wake the device if the trap triggers, ensuring no events are missed
 - Use the built-in diagnostic mode by holding the boot button during initial power-up (not available during wake from sleep):
   - The RGB LED will indicate sensor states in diagnostic mode:
     - Green: Mouse trap sensor triggered

@@ -24,6 +24,10 @@ RTC_DATA_ATTR static uint16_t cycles_since_publish = 0;
 #define CYCLES_PER_HOUR (3600 / SLEEP_TIME_SECONDS)
 #define CYCLES_FOR_PUBLISH (CYCLES_PER_HOUR * HEARTBEAT_INTERVAL_HOURS)
 
+// For wake circuit mode, we can use a longer sleep time since we don't need to poll
+// We'll wake up once per heartbeat interval (in seconds) to check battery and publish heartbeat
+#define WAKE_CIRCUIT_SLEEP_TIME_SECONDS (HEARTBEAT_INTERVAL_HOURS * 3600)
+
 static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2)
 {
     bool trap_triggered = sensor_manager_is_trap_triggered(sensor1);
@@ -44,15 +48,28 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
     // Increment cycle counter
     cycles_since_publish++;
     
+    // When using wake circuit with long sleep time, force heartbeat on every wake from timer
+    bool heartbeat_due = false;
+    #if USE_WAKE_CIRCUIT
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
+        // If we woke up from timer with wake circuit enabled, it's time for a heartbeat
+        heartbeat_due = true;
+        if (DEBUG_LOGS) {
+            printf("[%s] Timer wakeup with wake circuit - forcing heartbeat\n", TAG);
+        }
+    }
+    #endif
+    
     if (DEBUG_LOGS) {
         printf("[%s] Cycles since last publish: %d/%d\n",
                TAG, cycles_since_publish, CYCLES_FOR_PUBLISH);
     }
     
-    // Connect and publish if states changed, first boot, or enough cycles elapsed
+    // Connect and publish if states changed, first boot, heartbeat due, or enough cycles elapsed
     if (trap_triggered != last_trap_state ||
         battery_low != last_battery_state ||
         is_first_boot ||
+        heartbeat_due ||
         cycles_since_publish >= CYCLES_FOR_PUBLISH) {
         
         // Set initialized flag on first boot
@@ -75,8 +92,8 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
             if (mqtt_manager_init()) {
                 connected = true;
                 
-                // Publish trap state if changed, first boot, or heartbeat interval reached
-                if (trap_triggered != last_trap_state || is_first_boot || cycles_since_publish >= CYCLES_FOR_PUBLISH) {
+                // Publish trap state if changed, first boot, heartbeat due, or heartbeat interval reached
+                if (trap_triggered != last_trap_state || is_first_boot || heartbeat_due || cycles_since_publish >= CYCLES_FOR_PUBLISH) {
                     const char *trap_state = trap_triggered ? "triggered" : "ready";
                     if (DEBUG_LOGS) printf("[%s] Publishing trap state: %s to topic: %s\n",
                                          TAG, trap_state, MQTT_TOPIC_CAUGHT);
@@ -86,8 +103,8 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
                     }
                 }
 
-                // Publish battery state if changed, first boot, or heartbeat interval reached
-                if (battery_low != last_battery_state || is_first_boot || cycles_since_publish >= CYCLES_FOR_PUBLISH) {
+                // Publish battery state if changed, first boot, heartbeat due, or heartbeat interval reached
+                if (battery_low != last_battery_state || is_first_boot || heartbeat_due || cycles_since_publish >= CYCLES_FOR_PUBLISH) {
                     const char *battery_state = battery_low ? "low" : "ok";
                     if (DEBUG_LOGS) printf("[%s] Publishing battery state: %s to topic: %s\n",
                                          TAG, battery_state, MQTT_TOPIC_BATTERY);
@@ -245,12 +262,12 @@ void app_main(void)
         
         // Enable wakeup using the proper ESP-IDF function for ESP32-C3
         ESP_ERROR_CHECK(esp_deep_sleep_enable_gpio_wakeup(BIT(WAKE_PIN), ESP_GPIO_WAKEUP_GPIO_HIGH));
-        ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(SLEEP_TIME_SECONDS * 1000000ULL));  // Also wake on timer
+        ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(WAKE_CIRCUIT_SLEEP_TIME_SECONDS * 1000000ULL));  // Wake for heartbeat
         
         // Go to deep sleep
         if (DEBUG_LOGS) {
-            printf("[%s] Going to sleep for %d seconds (or until wake pin triggers)\n",
-                   TAG, SLEEP_TIME_SECONDS);
+            printf("[%s] Going to sleep for %d hours (or until wake pin triggers)\n",
+                   TAG, HEARTBEAT_INTERVAL_HOURS);
         } else {
             printf("[%s] Entering deep sleep\n", TAG);
         }

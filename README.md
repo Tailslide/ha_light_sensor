@@ -373,6 +373,12 @@ The dual sleep mode strategy maximizes power efficiency:
 - For detailed operation logs, set `DEBUG_LOGS` to 1 in `config.h`
   - This will output detailed status messages for WiFi, MQTT, and sensor operations
   - Note: Critical system messages and diagnostic mode will always be shown regardless of this setting
+- If the device is not waking properly from deep sleep:
+  - Ensure the GPIO wake pin is properly configured with appropriate pull-up/pull-down resistors
+  - For ESP32-C3, use `esp_deep_sleep_enable_gpio_wakeup()` instead of `gpio_wakeup_enable()` and `esp_sleep_enable_gpio_wakeup()`
+  - Check for both `ESP_SLEEP_WAKEUP_GPIO` and `ESP_SLEEP_WAKEUP_EXT0` wake causes in your code
+  - Properly configure the GPIO pin before enabling it as a wakeup source
+  - Add a small delay before entering deep sleep to ensure all logs are printed
 - Use the built-in diagnostic mode by holding the boot button during initial power-up (not available during wake from sleep):
   - The RGB LED will indicate sensor states in diagnostic mode:
     - Green: Mouse trap sensor triggered
@@ -400,6 +406,7 @@ The dual sleep mode strategy maximizes power efficiency:
   - Home Assistant will continue to show the last known state until a successful update
   - WiFi issues won't affect the device's ability to monitor the trap - all states are preserved
 - If you encounter build issues with macros in common.h, ensure there are no trailing backslashes at the end of lines
+- If you see duplicate MQTT messages in the logs (e.g., "MQTT Connected" appearing twice), update to the latest version which fixes an issue with duplicate event handler registration in mqtt_manager.c
 
 ## License
 

@@ -118,26 +118,36 @@ static void publish_sensor_states(sensor_data_t *sensor1, sensor_data_t *sensor2
 static void check_wakeup_cause(void) {
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
     
-    if (DEBUG_LOGS) {
-        printf("[%s] Wake up reason: ", TAG);
-        switch(wakeup_reason) {
-            case ESP_SLEEP_WAKEUP_EXT0:
-                printf("external signal using RTC_IO (wake circuit)\n");
-                break;
-            case ESP_SLEEP_WAKEUP_TIMER:
-                printf("timer\n");
-                break;
-            case ESP_SLEEP_WAKEUP_UNDEFINED:
-                printf("undefined (first boot)\n");
-                break;
-            default:
-                printf("other reason (%d)\n", wakeup_reason);
-                break;
-        }
+    // Always log wakeup reason for debugging
+    printf("[%s] Wake up reason: ", TAG);
+    switch(wakeup_reason) {
+        case ESP_SLEEP_WAKEUP_EXT0:
+            printf("external signal using RTC_IO (wake circuit)\n");
+            break;
+        case ESP_SLEEP_WAKEUP_GPIO:
+            printf("GPIO wakeup (wake circuit)\n");
+            
+            // For GPIO wakeup, we can check which pin triggered the wakeup
+            uint64_t wakeup_pin_mask = esp_sleep_get_gpio_wakeup_status();
+            if (wakeup_pin_mask != 0) {
+                int pin = __builtin_ffsll(wakeup_pin_mask) - 1;
+                printf("[%s] Wakeup from GPIO %d\n", TAG, pin);
+            }
+            break;
+        case ESP_SLEEP_WAKEUP_TIMER:
+            printf("timer\n");
+            break;
+        case ESP_SLEEP_WAKEUP_UNDEFINED:
+            printf("undefined (first boot)\n");
+            break;
+        default:
+            printf("other reason (%d)\n", wakeup_reason);
+            break;
     }
     
-    // If woken up by wake circuit, we know the trap is triggered
-    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
+    // If woken up by wake circuit (either EXT0 or GPIO depending on chip)
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0 || wakeup_reason == ESP_SLEEP_WAKEUP_GPIO) {
+        printf("[%s] Wakeup triggered by wake circuit - trap state will be published\n", TAG);
         last_trap_state = false; // Force state change to trigger publish
     }
 }
@@ -189,22 +199,46 @@ void app_main(void)
         sensor_manager_sample_battery(adc1_handle, &sensor2_data);
         
         // Set sensor1 data based on wake pin
-        sensor1_data.max_value = gpio_get_level(WAKE_PIN) ? TRAP_THRESHOLD + 100 : 0;
+        int wake_pin_level = gpio_get_level(WAKE_PIN);
+        sensor1_data.max_value = wake_pin_level ? TRAP_THRESHOLD + 100 : 0;
+        printf("[%s] Wake pin level: %d, setting sensor1 max_value to %d\n",
+               TAG, wake_pin_level, sensor1_data.max_value);
         
         // Publish results if needed
         publish_sensor_states(&sensor1_data, &sensor2_data);
         
         // Configure wake-up sources
         // ESP32-C3 doesn't support ext0 wakeup, use gpio wakeup instead
-        gpio_wakeup_enable(WAKE_PIN, GPIO_INTR_HIGH_LEVEL);  // Wake when pin is HIGH
-        esp_sleep_enable_gpio_wakeup();
-        esp_sleep_enable_timer_wakeup(SLEEP_TIME_SECONDS * 1000000ULL);  // Also wake on timer
+        
+        // Properly configure the GPIO pin first
+        const gpio_config_t wake_pin_config = {
+            .pin_bit_mask = BIT(WAKE_PIN),
+            .mode = GPIO_MODE_INPUT,
+            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_ENABLE,  // Pull down to ensure stable LOW when not triggered
+            .intr_type = GPIO_INTR_DISABLE,
+        };
+        ESP_ERROR_CHECK(gpio_config(&wake_pin_config));
+        
+        // Read current state for debugging
+        int pin_level = gpio_get_level(WAKE_PIN);
+        printf("[%s] Current wake pin level: %d\n", TAG, pin_level);
+        
+        // Enable wakeup using the proper ESP-IDF function for ESP32-C3
+        ESP_ERROR_CHECK(esp_deep_sleep_enable_gpio_wakeup(BIT(WAKE_PIN), ESP_GPIO_WAKEUP_GPIO_HIGH));
+        ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(SLEEP_TIME_SECONDS * 1000000ULL));  // Also wake on timer
         
         // Go to deep sleep
         if (DEBUG_LOGS) {
             printf("[%s] Going to sleep for %d seconds (or until wake pin triggers)\n",
                    TAG, SLEEP_TIME_SECONDS);
+        } else {
+            printf("[%s] Entering deep sleep\n", TAG);
         }
+        
+        // Small delay to ensure logs are printed
+        vTaskDelay(pdMS_TO_TICKS(100));
+        
         esp_deep_sleep_start();
     #else
         // Original behavior without wake circuit

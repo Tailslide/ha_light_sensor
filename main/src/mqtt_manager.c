@@ -61,8 +61,9 @@ bool mqtt_manager_init(void)
         return false;
     }
 
+    // Register event handler with mqtt_connected pointer to update connection status
     esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID,
-                                 mqtt_manager_event_handler, NULL);
+                                  mqtt_manager_event_handler, &mqtt_connected);
     
     if (esp_mqtt_client_start(mqtt_client) != ESP_OK) {
         printf("[%s] Failed to start MQTT client\n", TAG);
@@ -74,10 +75,6 @@ bool mqtt_manager_init(void)
     // Give more time for the connection to establish
     int retry_count = 0;
     const int max_retries = 5;  // 5 * 2 seconds = 10 second timeout
-    
-    // Update event handler to set the flag
-    esp_mqtt_client_register_event(mqtt_client, MQTT_EVENT_CONNECTED,
-                                 mqtt_manager_event_handler, &mqtt_connected);
     
     while (retry_count < max_retries && !mqtt_connected) {
         if (DEBUG_LOGS) printf("[%s] Waiting for MQTT connection... (%d/%d)\n", 

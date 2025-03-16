@@ -379,6 +379,12 @@ The dual sleep mode strategy maximizes power efficiency:
   - Check for both `ESP_SLEEP_WAKEUP_GPIO` and `ESP_SLEEP_WAKEUP_EXT0` wake causes in your code
   - Properly configure the GPIO pin before enabling it as a wakeup source
   - Add a small delay before entering deep sleep to ensure all logs are printed
+- If the wake circuit triggers but doesn't register as a trap event:
+  - The latest firmware includes a fix for a race condition where brief wake pin triggers might not be detected
+  - The system now considers a trap triggered if either:
+    1. The current wake pin level is HIGH, or
+    2. The device was woken by the wake circuit (even if the pin is now LOW)
+  - This ensures that even momentary triggers will be properly detected and reported
 - Use the built-in diagnostic mode by holding the boot button during initial power-up (not available during wake from sleep):
   - The RGB LED will indicate sensor states in diagnostic mode:
     - Green: Mouse trap sensor triggered

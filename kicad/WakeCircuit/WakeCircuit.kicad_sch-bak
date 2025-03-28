@@ -1995,35 +1995,15 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "Delay Reset to keep wake high long enough to wake ESP\n"
+	(text "Flip Flop 1 Starts a 30 second lockout timer that prevents flip flop 2 from waking the esp32 unless no activity has been seen on the light diode for more than 30 seconds\n"
 		(exclude_from_sim no)
-		(at 241.046 88.646 0)
+		(at 118.618 127.254 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "6d1cc821-606f-445f-96c9-44b17fba8cff")
-	)
-	(text_box "Flip Flop 1 Starts a 30 second lockout timer that prevents flip flop 2 from waking the esp32 unless no activity has been seen on the light diode for more than 30 seconds\n"
-		(exclude_from_sim no)
-		(at 83.82 127 0)
-		(size 92.71 17.78)
-		(margins 0.9525 0.9525 0.9525 0.9525)
-		(stroke
-			(width 0)
-			(type solid)
-		)
-		(fill
-			(type none)
-		)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "c79282fa-a695-42fe-a178-ed672fead72b")
+		(uuid "daf9b1f5-9e20-4b56-b0b4-a5bf4c610053")
 	)
 	(junction
 		(at 207.01 90.17)

@@ -3080,6 +3080,16 @@
 		)
 		(uuid "6d1cc821-606f-445f-96c9-44b17fba8cff")
 	)
+	(text "Prototyped with Electrolytic but use ceramic"
+		(exclude_from_sim no)
+		(at 258.064 24.384 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "d3af9949-2097-45c2-8750-6539974c3714")
+	)
 	(text_box "Flip Flop 1 Starts a 30 second lockout timer that prevents flip flop 2 from waking the esp32 unless no activity has been seen on the light diode for more than 30 seconds\n"
 		(exclude_from_sim no)
 		(at 100.33 143.51 0)
@@ -3635,6 +3645,42 @@
 			)
 		)
 		(property "Description" "Trim-potentiometer"
+			(at 207.01 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Device" "R"
+			(at 207.01 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Type" "POT"
+			(at 207.01 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Pins" "1=r0 2=wiper 3=r1"
+			(at 207.01 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Params" "r=\"\""
 			(at 207.01 46.99 0)
 			(effects
 				(font
@@ -4248,7 +4294,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 123.19 92.202 90)
 			(effects
 				(font
@@ -4746,7 +4792,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_Tantalum_SMD:CP_EIA-3216-18_Kemet-A"
 			(at 134.62 93.0148 0)
 			(effects
 				(font
@@ -4975,7 +5021,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 233.68 37.1348 0)
 			(effects
 				(font
@@ -5311,7 +5357,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 163.83 103.632 90)
 			(effects
 				(font
@@ -5348,6 +5394,74 @@
 			(project "WakeCircuit"
 				(path "/37cf770b-fa56-49dc-98af-b2d65e07667b"
 					(reference "R4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 229.87 26.67 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "96bec03d-8c73-477b-872c-e1ec2cd221e2")
+		(property "Reference" "C4"
+			(at 229.87 19.05 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "10uF"
+			(at 229.87 21.59 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 226.06 27.6352 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 229.87 26.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 229.87 26.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "9f503a9a-8f9a-42b6-b9ac-61c17999fccd")
+		)
+		(pin "2"
+			(uuid "de131aa7-b45c-4bf5-9eb7-5e1b11efe853")
+		)
+		(instances
+			(project ""
+				(path "/37cf770b-fa56-49dc-98af-b2d65e07667b"
+					(reference "C4")
 					(unit 1)
 				)
 			)
@@ -5647,7 +5761,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P5.08mm_Vertical"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 152.908 50.8 90)
 			(effects
 				(font
@@ -5715,7 +5829,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 118.11 56.642 90)
 			(effects
 				(font
@@ -5849,7 +5963,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 177.8 104.4448 0)
 			(effects
 				(font
@@ -6022,74 +6136,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:C_Polarized")
-		(at 229.87 26.67 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "cbb16218-c638-4d01-b356-cd39bdce0216")
-		(property "Reference" "C4"
-			(at 228.981 34.29 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "10uF"
-			(at 228.981 31.75 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 233.68 25.7048 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 229.87 26.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Polarized capacitor"
-			(at 229.87 26.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "2"
-			(uuid "5cbadfae-5cbf-4642-b364-c1f16611ad0d")
-		)
-		(pin "1"
-			(uuid "78e547bf-f1da-43a9-a8e4-271ec4fae9c3")
-		)
-		(instances
-			(project ""
-				(path "/37cf770b-fa56-49dc-98af-b2d65e07667b"
-					(reference "C4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "4xxx:4013")
 		(at 165.1 82.55 180)
 		(unit 1)
@@ -6117,7 +6163,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
 			(at 165.1 82.55 0)
 			(effects
 				(font
@@ -6420,7 +6466,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
 			(at 259.08 91.44 0)
 			(effects
 				(font
@@ -6593,7 +6639,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
 			(at 207.01 100.33 0)
 			(effects
 				(font

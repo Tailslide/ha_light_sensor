@@ -1,4 +1,5 @@
 (fp_lib_table
   (version 7)
   (lib (name "TLV7011DBVR")(type "KiCad")(uri "${KIPRJMOD}/ul_TLV7011DBVR/KiCADv6/footprints.pretty")(options "")(descr ""))
+  (lib (name "3214J-1-103E")(type "KiCad")(uri "${KIPRJMOD}/3214J-1-103E.pretty")(options "")(descr ""))
 )

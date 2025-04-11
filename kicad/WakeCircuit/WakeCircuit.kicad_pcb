@@ -75,7 +75,7 @@
 			(mirror no)
 			(drillshape 0)
 			(scaleselection 1)
-			(outputdirectory "")
+			(outputdirectory "C:/source/ha_light_sensor/kicad/WakeCircuit/Output")
 		)
 	)
 	(net 0 "")

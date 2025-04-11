@@ -1,0 +1,22 @@
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Cu.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Cu.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Paste.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Paste.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Silkscreen.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Silkscreen.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Mask.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Mask.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-Edge_Cuts.gbr'.
+Created Gerber job file 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-job.gbrjob'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Cu.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Cu.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Paste.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Paste.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Silkscreen.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Silkscreen.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-F_Mask.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-B_Mask.gbr'.
+Plotted to 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-Edge_Cuts.gbr'.
+Created Gerber job file 'C:\source\ha_light_sensor\kicad\WakeCircuit\Output\WakeCircuit-job.gbrjob'.
+Info: Done.
+Info: Done.

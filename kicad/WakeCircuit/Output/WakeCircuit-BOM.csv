@@ -1,14 +1,15 @@
-"Id";"Designator";"Footprint";"Quantity";"Designation";"Supplier and ref";
-1;"RV1";"Potentiometer_Bourns_3214J_Horizontal";1;"10K";;;
-2;"C2";"CP_EIA-3216-18_Kemet-A";1;"22uF";;;
-3;"C3,C1";"C_0805_2012Metric";2;"100nF";;;
-4;"R2";"R_0805_2012Metric";1;"2.2M";;;
-5;"D1";"D_SOD-123F";1;"1N4148";;;
-6;"R1,R4,R3";"R_0805_2012Metric";3;"10K";;;
-7;"C4";"C_0805_2012Metric";1;"10uF";;;
-8;"R5";"R_0805_2012Metric";1;"1.2K";;;
-9;"U3";"TSSOP-14_4.4x5mm_P0.65mm";1;"4013";;;
-10;"J2";"PinSocket_1x10_P2.54mm_Vertical";1;"Conn_01x10_Socket";;;
-11;"J1";"PinSocket_1x12_P2.54mm_Vertical";1;"Conn_01x12_Socket";;;
-12;"U1";"SOT_1DBVR_TEX";1;"TLV7011DBVR";;;
-13;"J4";"JST_PH_S3B-PH-K_1x03_P2.00mm_Horizontal";1;"Conn_01x03_Socket";;;
+"Reference","Qty","Value","Description","DNP","Exclude from BOM","Exclude from Board","Footprint","Datasheet","PartNumber"
+"C1,C3","2","100nF","Unpolarized capacitor","","","","Capacitor_SMD:C_0805_2012Metric","~","CC0805KKX7R0BB104 "
+"C2","1","22uF","Polarized capacitor","","","","Capacitor_Tantalum_SMD:CP_EIA-3216-18_Kemet-A","~","TAJA226K010RNJ "
+"C4","1","10uF","Unpolarized capacitor","","","","Capacitor_SMD:C_0805_2012Metric","~","CL21A106MPFNNNE"
+"D1","1","1N4148","100V 0.15A standard switching diode, DO-35","","","","Diode_SMD:D_SOD-123F","https://assets.nexperia.com/documents/data-sheet/1N4148_1N4448.pdf","1N4148W-7-F "
+"J1","1","Conn_01x12_Socket","Generic connector, single row, 01x12, script generated","","","","Connector_PinSocket_2.54mm:PinSocket_1x12_P2.54mm_Vertical","~","BCS-112-L-S-TE"
+"J2","1","Conn_01x10_Socket","Generic connector, single row, 01x10, script generated","","","","Connector_PinSocket_2.54mm:PinSocket_1x10_P2.54mm_Vertical","~","BCS-110-L-S-TE"
+"J4","1","Conn_01x03_Socket","Generic connector, single row, 01x03, script generated","","","","Connector_JST:JST_PH_S3B-PH-K_1x03_P2.00mm_Horizontal","~","S3B-PH-K(LF)(SN)"
+"LDR1,LDR2","2","GL5539","light dependent resistor","","Excluded from BOM","Excluded from board","OptoDevice:R_LDR_4.9x4.2mm_P2.54mm_Vertical","https://docs.pedalpcb.com/datasheet/GL55.pdf",""
+"R1,R3,R4","3","10K","Resistor","","","","Resistor_SMD:R_0805_2012Metric","~","RC0805FR-0710KL "
+"R2","1","2.2M","Resistor","","","","Resistor_SMD:R_0805_2012Metric","~","RC0805FR-072M2L "
+"R5","1","1.2K","Resistor","","","","Resistor_SMD:R_0805_2012Metric","~","RC0805FR-071K2L"
+"RV1","1","10K","Trim-potentiometer","","","","Potentiometer_SMD:Potentiometer_Bourns_3214J_Horizontal","~","3214J-1-103E"
+"U1","1","TLV7011DBVR","","","","","TLV7011DBVR:SOT_1DBVR_TEX","TLV7011DBVR","TLV7011DBVR"
+"U3","1","4013","Dual D  FlipFlop, Set & reset","","","","Package_SO:TSSOP-14_4.4x5mm_P0.65mm","http://www.onsemi.com/pub/Collateral/MC14013B-D.PDF","CD4013BPW "

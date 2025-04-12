@@ -212,6 +212,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "3214J-1-103E"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e773a306-e925-4327-bb03-d418eccc5000")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Potentiometer*")
 		(path "/01a490ad-7c59-49e1-8d9a-a4c40c759f74")
 		(sheetname "/")
@@ -564,6 +577,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "TAJA226K010RNJ "
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "bea99687-ce57-44eb-b0ec-8552601d2017")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "CP_*")
 		(path "/616420a9-e648-40e5-9614-3ab067c72052")
 		(sheetname "/")
@@ -786,6 +812,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "CC0805KKX7R0BB104 "
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "bb5bab8c-747e-43d5-b7e6-ac2b35ea6e78")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/774ce68b-19ad-4272-8f4b-02b721e41185")
 		(sheetname "/")
@@ -984,6 +1023,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "PartNumber" "RC0805FR-072M2L "
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6cf5fec8-b842-4ef8-81ef-2e76652a1eb3")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -1209,6 +1261,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f3e8bf4d-27f0-4ea9-850c-094930b21c8b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "PartNumber" "1N4148W-7-F "
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "af697d70-7fc6-4399-91a6-4c80277de731")
 			(effects
 				(font
 					(size 1 1)
@@ -1499,6 +1564,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "RC0805FR-0710KL "
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9787bc49-49b3-4a39-9af2-c78da2000529")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/af2ca15e-9a42-49ed-900c-3a49fade7aa8")
 		(sheetname "/")
@@ -1697,6 +1775,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "PartNumber" "CL21A106MPFNNNE"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "20d98c4a-f240-4094-a406-b7b6b41735de")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -1902,6 +1993,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "RC0805FR-071K2L"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0c172fa9-cfbb-4494-a019-fd235a6bde21")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/c286a9dc-59b7-4626-9d9f-377028790b98")
 		(sheetname "/")
@@ -2097,6 +2201,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "PartNumber" "CD4013BPW "
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f5f2254d-c153-42a9-8d15-bd80e0779029")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -2467,6 +2584,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "BCS-110-L-S-TE"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ddd68b70-f032-42a2-b4fd-bf80763529ef")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(path "/675b24e7-3d44-4d07-bbb3-9aeb5595ddf9")
 		(sheetname "/")
@@ -2813,6 +2943,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "RC0805FR-0710KL "
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e2909858-8f7d-4064-830c-15a031066a6a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/8e9de47c-3cfe-4581-829d-ad146be3216f")
 		(sheetname "/")
@@ -3011,6 +3154,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "PartNumber" "BCS-112-L-S-TE"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ff640e3b-1c04-4ab9-8e80-8ba31f0ab498")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -3357,7 +3513,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "TLV7011DBVR"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -3377,6 +3533,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "PartNumber" "TLV7011DBVR"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "47e28b00-636f-45f6-bb68-ea97b9ed8271")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -3935,6 +4104,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "S3B-PH-K(LF)(SN)"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0b21d22a-a571-4b6a-9112-3a6bfb624a24")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(path "/070af4c1-c552-4007-8ceb-f772211650e1")
 		(sheetname "/")
@@ -4452,6 +4634,19 @@
 				)
 			)
 		)
+		(property "PartNumber" "RC0805FR-0710KL "
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1e1ff554-3f93-4369-a983-d3a5d1754ce3")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/afca9fdf-e28f-41af-b448-de811f6a9819")
 		(sheetname "/")
@@ -4649,6 +4844,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "PartNumber" "CC0805KKX7R0BB104 "
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7d92bf5c-e7db-478e-86d6-2796d1341695")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)

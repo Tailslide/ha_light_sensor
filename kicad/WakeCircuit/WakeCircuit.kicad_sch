@@ -3991,6 +3991,14 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "3214J-1-103E"
+			(at 207.01 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "2162c0a9-b977-4b83-acf2-589771768de2")
 		)
@@ -4060,6 +4068,14 @@
 					(size 1.27 1.27)
 				)
 				(hide yes)
+			)
+		)
+		(property "PartNumber" "S3B-PH-K(LF)(SN)"
+			(at 49.53 116.84 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
 			)
 		)
 		(pin "3"
@@ -4198,6 +4214,14 @@
 					(size 1.27 1.27)
 				)
 				(hide yes)
+			)
+		)
+		(property "PartNumber" "TLV7011DBVR"
+			(at 151.13 34.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
 			)
 		)
 		(pin "2"
@@ -4626,6 +4650,15 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "1N4148W-7-F "
+			(at 144.78 81.28 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "dc673502-836c-4b54-936d-74f9b7535589")
 		)
@@ -4687,6 +4720,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 123.19 93.98 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "RC0805FR-072M2L "
+			(at 123.19 93.98 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5024,6 +5066,15 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "BCS-112-L-S-TE"
+			(at 36.83 66.04 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "7"
 			(uuid "8155a489-81d6-437a-9499-1270fe59e43f")
 		)
@@ -5122,6 +5173,15 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "TAJA226K010RNJ "
+			(at 130.81 93.98 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "e2295b7e-7141-44c6-a5de-58a889df051d")
 		)
@@ -5142,7 +5202,7 @@
 		(at 58.42 139.7 270)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board no)
 		(dnp no)
 		(fields_autoplaced yes)
@@ -5252,6 +5312,15 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x10, script generated"
+			(at 67.31 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "BCS-110-L-S-TE"
 			(at 67.31 68.58 0)
 			(effects
 				(font
@@ -5477,6 +5546,15 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 229.87 38.1 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "CC0805KKX7R0BB104 "
+			(at 229.87 38.1 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5885,6 +5963,15 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "RC0805FR-0710KL "
+			(at 163.83 105.41 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "c954ffdb-8001-4041-8cfb-1cd6ebb08e3a")
 		)
@@ -5946,6 +6033,15 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 229.87 26.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "CL21A106MPFNNNE"
+			(at 229.87 26.67 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6223,6 +6319,15 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "RC0805FR-0710KL "
+			(at 151.13 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "9c07f50a-d63a-4627-8486-1ed521658806")
 		)
@@ -6284,6 +6389,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 101.6 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "RC0805FR-0710KL "
+			(at 101.6 58.42 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6425,6 +6539,15 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "CC0805KKX7R0BB104 "
+			(at 173.99 105.41 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "586b0a7d-8e52-4da3-ae33-423dc24aa09a")
 		)
@@ -6551,6 +6674,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 49.53 99.06 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "RC0805FR-071K2L"
+			(at 49.53 99.06 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6685,6 +6817,15 @@
 			)
 		)
 		(property "Description" "Dual D  FlipFlop, Set & reset"
+			(at 165.1 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "CD4013BPW "
 			(at 165.1 82.55 0)
 			(effects
 				(font
@@ -6996,6 +7137,15 @@
 				(hide yes)
 			)
 		)
+		(property "PartNumber" "CD4013BPW "
+			(at 259.08 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "3"
 			(uuid "66324ca9-d194-4694-b702-e3e8fde8f423")
 		)
@@ -7119,7 +7269,7 @@
 		(at 45.72 139.7 270)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board no)
 		(dnp no)
 		(fields_autoplaced yes)
@@ -7229,6 +7379,15 @@
 			)
 		)
 		(property "Description" "Dual D  FlipFlop, Set & reset"
+			(at 207.01 100.33 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "PartNumber" "CD4013BPW "
 			(at 207.01 100.33 0)
 			(effects
 				(font
